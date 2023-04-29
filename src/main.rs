@@ -4,7 +4,9 @@ use winit::{
     window::WindowBuilder,
 };
 
+mod buffer;
 mod renderer;
+mod vertex;
 
 fn main() {
     run();
