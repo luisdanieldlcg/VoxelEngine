@@ -1,8 +1,11 @@
+use vek::Mat4;
+use wgpu::BindGroupEntry;
 use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::buffer::Buffer;
-use crate::texture::{self, Texture};
+use crate::texture::Texture;
+use crate::uniforms::TransformUniform;
 use crate::vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES};
 
 pub struct Renderer {
@@ -15,6 +18,8 @@ pub struct Renderer {
     polygon_index_buffer: Buffer<u16>,
     texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
+    transform_buffer: Buffer<TransformUniform>,
+    transform_bind_group: wgpu::BindGroup,
 }
 
 impl Renderer {
@@ -114,14 +119,50 @@ impl Renderer {
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource:  wgpu::BindingResource::Sampler(&texture.sampler),
+                    resource: wgpu::BindingResource::Sampler(&texture.sampler),
                 },
             ],
-        }); 
+        });
+
+        let mut mat: Mat4<f32> = vek::Mat4::identity();
+        mat.scale_3d(0.5);
+        mat = Mat4::translation_3d(0.3) * mat; 
+        let transform_uniform = TransformUniform::new(mat);
+
+        let transform_buffer = Buffer::new(
+            &device,
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            &[transform_uniform],
+        );
+
+        let transform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &transform_bind_group_layout,
+            entries: &[BindGroupEntry {
+                binding: 0,
+                resource: transform_buffer.buf.as_entire_binding(),
+            }],
+        });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Pipeline layout"),
-            bind_group_layouts: &[&texture_bind_group_layout],
+            // Determines the order of our bind groups
+            // for example, texture_bind_group_layout will be at group(0)
+            bind_group_layouts: &[&texture_bind_group_layout, &transform_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -164,7 +205,6 @@ impl Renderer {
         let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
         surface.configure(&device, &config);
 
-
         Self {
             surface,
             device,
@@ -175,6 +215,8 @@ impl Renderer {
             polygon_index_buffer,
             texture_bind_group,
             size,
+            transform_buffer,
+            transform_bind_group,
         }
     }
 
@@ -228,12 +270,13 @@ impl Renderer {
             });
             render.set_pipeline(&self.pipeline);
             render.set_bind_group(0, &self.texture_bind_group, &[]);
+            render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.polygon_buffer.buf.slice(..));
             render.set_index_buffer(
                 self.polygon_index_buffer.buf.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
-            render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1);
+            render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();

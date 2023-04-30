@@ -1,7 +1,7 @@
 use bytemuck::Pod;
 use wgpu::util::DeviceExt;
 
-pub struct Buffer<T> {
+pub struct Buffer<T: Copy + bytemuck::Pod> {
     pub buf: wgpu::Buffer,
     len: usize,
     phantom_data: std::marker::PhantomData<T>,

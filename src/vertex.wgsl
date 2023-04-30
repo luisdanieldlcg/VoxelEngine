@@ -1,3 +1,10 @@
+struct Camera {
+    transform: mat4x4<f32>,
+}
+
+@group(1) @binding(0) 
+var<uniform> camera: Camera;
+
 struct VertexIn {
     // Vertices coordinates
     @location(0) vertices: vec3<f32>,
@@ -13,7 +20,7 @@ struct VertexData {
 @vertex
 fn vs_main(in: VertexIn) -> VertexData {
     var data: VertexData;
-    data.vertices = vec4<f32>(in.vertices, 1.0);
+    data.vertices = camera.transform * vec4<f32>(in.vertices, 1.0);
     data.tex_pos = in.tex_pos;
     return data;
 }

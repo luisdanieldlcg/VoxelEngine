@@ -54,6 +54,3 @@ pub const POLYGON_VERTICES: &[Vertex] = &[
 ];
 
 pub const POLYGON_INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
-// 0, 1, 4,
-// 1, 2, 4,
-// 2, 3, 4,
