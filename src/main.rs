@@ -7,6 +7,7 @@ use winit::{
 mod buffer;
 mod renderer;
 mod vertex;
+mod texture;
 
 fn main() {
     run();

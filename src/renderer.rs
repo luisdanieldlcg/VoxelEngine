@@ -71,7 +71,7 @@ impl Renderer {
             view_formats: vec![],
         };
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("triangle.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("vertex.wgsl"));
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Pipeline layout"),
