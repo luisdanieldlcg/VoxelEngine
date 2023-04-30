@@ -2,6 +2,7 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::buffer::Buffer;
+use crate::texture::{self, Texture};
 use crate::vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES};
 
 pub struct Renderer {
@@ -12,6 +13,7 @@ pub struct Renderer {
     pipeline: wgpu::RenderPipeline,
     polygon_buffer: Buffer<Vertex>,
     polygon_index_buffer: Buffer<u16>,
+    texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
 }
 
@@ -73,9 +75,53 @@ impl Renderer {
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("vertex.wgsl"));
 
+        // Texture bind group
+
+        let file = include_bytes!("assets/stone.jpg");
+        let texture = Texture::new(&device, &queue, file);
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Texture bind group layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+
+        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Texture bind group"),
+            layout: &texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource:  wgpu::BindingResource::Sampler(&texture.sampler),
+                },
+            ],
+        }); 
+
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Pipeline layout"),
-            bind_group_layouts: &[],
+            bind_group_layouts: &[&texture_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -118,6 +164,7 @@ impl Renderer {
         let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
         surface.configure(&device, &config);
 
+
         Self {
             surface,
             device,
@@ -126,6 +173,7 @@ impl Renderer {
             pipeline,
             polygon_buffer,
             polygon_index_buffer,
+            texture_bind_group,
             size,
         }
     }
@@ -179,6 +227,7 @@ impl Renderer {
                 depth_stencil_attachment: None,
             });
             render.set_pipeline(&self.pipeline);
+            render.set_bind_group(0, &self.texture_bind_group, &[]);
             render.set_vertex_buffer(0, self.polygon_buffer.buf.slice(..));
             render.set_index_buffer(
                 self.polygon_index_buffer.buf.slice(..),

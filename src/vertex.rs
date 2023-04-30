@@ -1,12 +1,12 @@
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    pos: [f32; 3],
-    color: [f32; 3],
+    vertex_pos: [f32; 3],
+    texture_pos: [f32; 2],
 }
 impl Vertex {
     const ATTRIBUTES: [wgpu::VertexAttribute; 2] =
-        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3];
+        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x2];
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
@@ -17,39 +17,39 @@ impl Vertex {
 }
 pub const TRIANGLE_VERTICES: &[Vertex] = &[
     Vertex {
-        pos: [0.0, 0.5, 0.0],
-        color: [1.0, 0.0, 0.0],
+        vertex_pos: [0.0, 0.5, 0.0],
+        texture_pos: [1.0, 0.0],
     },
     Vertex {
-        pos: [-0.5, -0.5, 0.0],
-        color: [0.0, 1.0, 0.0],
+        vertex_pos: [-0.5, -0.5, 0.0],
+        texture_pos: [0.0, 1.0],
     },
     Vertex {
-        pos: [0.5, -0.5, 0.0],
-        color: [0.0, 0.0, 1.0],
+        vertex_pos: [0.5, -0.5, 0.0],
+        texture_pos: [0.0, 0.0],
     },
 ];
 
 pub const POLYGON_VERTICES: &[Vertex] = &[
     Vertex {
-        pos: [-0.0868241, 0.49240386, 0.0],
-        color: [1.0, 0.0, 0.0],
+        vertex_pos: [-0.0868241, 0.49240386, 0.0],
+        texture_pos: [0.4131759, 0.99240386],
     }, // A - Red
     Vertex {
-        pos: [-0.49513406, 0.06958647, 0.0],
-        color: [1.0, 0.5, 0.0],
+        vertex_pos: [-0.49513406, 0.06958647, 0.0],
+        texture_pos: [0.0048659444, 0.56958647],
     }, // B - Orange
     Vertex {
-        pos: [-0.21918549, -0.44939706, 0.0],
-        color: [1.0, 1.0, 0.0],
+        vertex_pos: [-0.21918549, -0.44939706, 0.0],
+        texture_pos: [0.28081453, 0.05060294],
     }, // C - Yellow
     Vertex {
-        pos: [0.35966998, -0.3473291, 0.0],
-        color: [0.0, 1.0, 0.0],
+        vertex_pos: [0.35966998, -0.3473291, 0.0],
+        texture_pos: [0.85967, 0.1526709],
     }, // D - Green
     Vertex {
-        pos: [0.44147372, 0.2347359, 0.0],
-        color: [0.0, 0.0, 1.0],
+        vertex_pos: [0.44147372, 0.2347359, 0.0],
+        texture_pos: [0.9414737, 0.7347359],
     }, // E - Blue
 ];
 

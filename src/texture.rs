@@ -1,19 +1,12 @@
-use image::DynamicImage;
-
-struct Texture {
+pub struct Texture {
     texture: wgpu::Texture,
-    view: wgpu::TextureView,
-    sampler: wgpu::Sampler,
+    pub view: wgpu::TextureView,
+    pub sampler: wgpu::Sampler,
 }
 
 impl Texture {
-    pub fn new(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        img: &DynamicImage,
-        buffer: &[u8],
-    ) -> Self {
-        let image = image::load_from_memory(buffer).unwrap();
+    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, buffer: &[u8]) -> Self {
+        let img = image::load_from_memory(buffer).unwrap();
 
         let size = wgpu::Extent3d {
             width: img.width(),
@@ -38,18 +31,29 @@ impl Texture {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            &image.to_rgba8(),
+            &img.to_rgba8(),
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * img.width()),
                 rows_per_image: Some(img.height()),
+                bytes_per_row: Some(4 * img.width()),
             },
             size,
         );
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
         Self {
             texture,
-            view: todo!(),
-            sampler: todo!(),
+            view,
+            sampler,
         }
     }
 }
