@@ -5,6 +5,7 @@ use winit::{
 };
 
 mod buffer;
+mod camera;
 mod renderer;
 mod texture;
 mod uniforms;
@@ -26,16 +27,19 @@ pub fn run() {
         Event::WindowEvent {
             ref event,
             window_id,
-        } if window_id == window.id() => match event {
-            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-            WindowEvent::Resized(size) => {
-                renderer.resize(*size);
-            }
-            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                renderer.resize(**new_inner_size);
-            }
-            _ => {}
-        },
+        } if window_id == window.id() => {
+            renderer.input(event);
+            match event {
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                WindowEvent::Resized(size) => {
+                    renderer.resize(*size);
+                }
+                WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                    renderer.resize(**new_inner_size);
+                }
+                _ => {}
+            };
+        }
         Event::RedrawRequested(window_id) if window_id == window.id() => {
             renderer.update();
             match renderer.render() {
@@ -43,6 +47,7 @@ pub fn run() {
                 Err(e) => eprintln!("{:?}", e),
             }
         }
+        Event::MainEventsCleared => {}
         _ => {}
     });
 }

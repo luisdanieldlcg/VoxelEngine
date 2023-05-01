@@ -4,6 +4,7 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::buffer::Buffer;
+use crate::camera::{self, Camera, CameraController};
 use crate::texture::Texture;
 use crate::uniforms::TransformUniform;
 use crate::vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES};
@@ -20,6 +21,8 @@ pub struct Renderer {
     size: winit::dpi::PhysicalSize<u32>,
     transform_buffer: Buffer<TransformUniform>,
     transform_bind_group: wgpu::BindGroup,
+    camera: camera::Camera,
+    camera_controller: camera::CameraController,
 }
 
 impl Renderer {
@@ -126,7 +129,7 @@ impl Renderer {
 
         let mut mat: Mat4<f32> = vek::Mat4::identity();
         mat.scale_3d(0.5);
-        mat = Mat4::translation_3d(0.3) * mat; 
+        mat = Mat4::translation_3d(0.3) * mat;
         let transform_uniform = TransformUniform::new(mat);
 
         let transform_buffer = Buffer::new(
@@ -217,6 +220,8 @@ impl Renderer {
             size,
             transform_buffer,
             transform_bind_group,
+            camera: Camera {},
+            camera_controller: CameraController::new(),
         }
     }
 
@@ -232,6 +237,15 @@ impl Renderer {
 
     /// Handle window events e.g keyboard or mouse
     pub fn input(&mut self, event: &WindowEvent) -> bool {
+        match event {
+            WindowEvent::KeyboardInput { input, .. } => {
+                self.camera_controller.handle_keyboard_events(&input);
+            }
+            WindowEvent::MouseInput { .. } => {
+                self.camera_controller.handle_mouse_events();
+            }
+            _ => (),
+        }
         false
     }
 
