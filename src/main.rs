@@ -28,17 +28,18 @@ pub fn run() {
             ref event,
             window_id,
         } if window_id == window.id() => {
-            renderer.input(event);
-            match event {
-                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                WindowEvent::Resized(size) => {
-                    renderer.resize(*size);
-                }
-                WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    renderer.resize(**new_inner_size);
-                }
-                _ => {}
-            };
+            if !renderer.input(event) {
+                match event {
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    WindowEvent::Resized(size) => {
+                        renderer.resize(*size);
+                    }
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        renderer.resize(**new_inner_size);
+                    }
+                    _ => {}
+                };
+            }
         }
         Event::RedrawRequested(window_id) if window_id == window.id() => {
             renderer.update();
@@ -47,7 +48,9 @@ pub fn run() {
                 Err(e) => eprintln!("{:?}", e),
             }
         }
-        Event::MainEventsCleared => {}
+        Event::MainEventsCleared => {
+            window.request_redraw();
+        }
         _ => {}
     });
 }

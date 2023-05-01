@@ -19,9 +19,9 @@ pub struct Renderer {
     polygon_index_buffer: Buffer<u16>,
     texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
+    transform_uniform: TransformUniform,
     transform_buffer: Buffer<TransformUniform>,
     transform_bind_group: wgpu::BindGroup,
-    camera: camera::Camera,
     camera_controller: camera::CameraController,
 }
 
@@ -220,7 +220,7 @@ impl Renderer {
             size,
             transform_buffer,
             transform_bind_group,
-            camera: Camera {},
+            transform_uniform,
             camera_controller: CameraController::new(),
         }
     }
@@ -237,19 +237,23 @@ impl Renderer {
 
     /// Handle window events e.g keyboard or mouse
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        match event {
+        return match event {
             WindowEvent::KeyboardInput { input, .. } => {
-                self.camera_controller.handle_keyboard_events(&input);
+                return self.camera_controller.handle_keyboard_events(&input);
             }
             WindowEvent::MouseInput { .. } => {
                 self.camera_controller.handle_mouse_events();
+                true
             }
-            _ => (),
-        }
-        false
+            _ => false,
+        };
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self) {
+        let new_transform = self.camera_controller.update();
+        self.transform_buffer
+            .update(&self.queue, &[new_transform], 0)
+    }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let surface_texture = self.surface.get_current_texture()?;

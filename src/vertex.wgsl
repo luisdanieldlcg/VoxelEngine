@@ -7,21 +7,21 @@ var<uniform> camera: Camera;
 
 struct VertexIn {
     // Vertices coordinates
-    @location(0) vertices: vec3<f32>,
+    @location(0) vertex_pos: vec3<f32>,
     // Texture coordinates
-    @location(1) tex_pos: vec2<f32>,
+    @location(1) texture_pos: vec2<f32>,
 }
 
 struct VertexData {
-    @builtin(position) vertices: vec4<f32>,
-    @location(0) tex_pos: vec2<f32>,
+    @builtin(position) vertex_pos: vec4<f32>,
+    @location(0) texture_pos: vec2<f32>,
 }
 
 @vertex
 fn vs_main(in: VertexIn) -> VertexData {
     var data: VertexData;
-    data.vertices = camera.transform * vec4<f32>(in.vertices, 1.0);
-    data.tex_pos = in.tex_pos;
+    data.vertex_pos = camera.transform * vec4<f32>(in.vertex_pos, 1.0);
+    data.texture_pos = in.texture_pos;
     return data;
 }
 
@@ -32,5 +32,5 @@ var tex_sampler: sampler;
 
 @fragment
 fn fs_main(data: VertexData) -> @location(0) vec4<f32> {
-    return textureSample(texture, tex_sampler, data.tex_pos);
+    return textureSample(texture, tex_sampler, data.texture_pos);
 }

@@ -19,6 +19,16 @@ impl<T: Copy + Pod> Buffer<T> {
             phantom_data: std::marker::PhantomData,
         }
     }
+    pub fn update(&self, queue: &wgpu::Queue, data: &[T], offset: usize) {
+        if data.is_empty() {
+            return;
+        }
+        queue.write_buffer(
+            &self.buf,
+            offset as u64 * std::mem::size_of::<T>() as u64,
+            bytemuck::cast_slice(data),
+        )
+    }
     pub fn len(&self) -> usize {
         self.len
     }
