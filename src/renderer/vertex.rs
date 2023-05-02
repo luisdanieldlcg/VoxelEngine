@@ -15,20 +15,6 @@ impl Vertex {
         }
     }
 }
-pub const TRIANGLE_VERTICES: &[Vertex] = &[
-    Vertex {
-        vertex_pos: [0.0, 0.5, 0.0],
-        texture_pos: [1.0, 0.0],
-    },
-    Vertex {
-        vertex_pos: [-0.5, -0.5, 0.0],
-        texture_pos: [0.0, 1.0],
-    },
-    Vertex {
-        vertex_pos: [0.5, -0.5, 0.0],
-        texture_pos: [0.0, 0.0],
-    },
-];
 
 pub const POLYGON_VERTICES: &[Vertex] = &[
     Vertex {

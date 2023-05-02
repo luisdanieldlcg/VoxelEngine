@@ -1,7 +1,7 @@
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
-use crate::uniforms::TransformUniform;
+use super::uniforms::TransformUniform;
 
 pub struct Camera {
     pos: Vec3<f32>,
@@ -26,7 +26,7 @@ impl Camera {
     }
     pub fn update_proj(&self) -> Mat4<f32> {
         let view = Mat4::<f32>::look_at_rh(self.pos, self.target, self.up);
-        let projection = Mat4::perspective_fov_rh_zo(0.5, 800.0, 600.0,  0.1, 100.0); 
+        let projection = Mat4::perspective_fov_rh_zo(0.5, 800.0, 600.0, 0.1, 100.0);
         projection * view
     }
 }

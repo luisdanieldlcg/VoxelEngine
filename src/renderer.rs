@@ -1,13 +1,22 @@
+mod buffer;
+mod camera;
+mod texture;
+mod ui;
+mod uniforms;
+mod vertex;
+
+use self::{
+    buffer::Buffer,
+    camera::CameraController,
+    texture::Texture,
+    ui::UIRenderer,
+    uniforms::TransformUniform,
+    vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES},
+};
 use vek::Mat4;
 use wgpu::BindGroupEntry;
 use winit::event::WindowEvent;
 use winit::window::Window;
-
-use crate::buffer::Buffer;
-use crate::camera::{self, Camera, CameraController};
-use crate::texture::Texture;
-use crate::uniforms::TransformUniform;
-use crate::vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES};
 
 pub struct Renderer {
     surface: wgpu::Surface,
@@ -23,6 +32,7 @@ pub struct Renderer {
     transform_buffer: Buffer<TransformUniform>,
     transform_bind_group: wgpu::BindGroup,
     camera_controller: camera::CameraController,
+    egui_render_pass: egui_wgpu_backend::RenderPass,
 }
 
 impl Renderer {
@@ -81,11 +91,12 @@ impl Renderer {
             view_formats: vec![],
         };
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("vertex.wgsl"));
+        let shader =
+            device.create_shader_module(wgpu::include_wgsl!("../assets/shaders/vertex.wgsl"));
 
         // Texture bind group
 
-        let file = include_bytes!("assets/stone.jpg");
+        let file = include_bytes!("../assets/stone.jpg");
         let texture = Texture::new(&device, &queue, file);
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -126,11 +137,7 @@ impl Renderer {
                 },
             ],
         });
-
-        let mut mat: Mat4<f32> = vek::Mat4::identity();
-        mat.scale_3d(0.5);
-        mat = Mat4::translation_3d(0.3) * mat;
-        let transform_uniform = TransformUniform::new(mat);
+        let transform_uniform = TransformUniform::new(Mat4::identity());
 
         let transform_buffer = Buffer::new(
             &device,
@@ -206,6 +213,8 @@ impl Renderer {
 
         let polygon_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, POLYGON_VERTICES);
         let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
+        let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
+
         surface.configure(&device, &config);
 
         Self {
@@ -222,6 +231,7 @@ impl Renderer {
             transform_bind_group,
             transform_uniform,
             camera_controller: CameraController::new(),
+            egui_render_pass,
         }
     }
 
@@ -255,18 +265,22 @@ impl Renderer {
             .update(&self.queue, &[new_transform], 0)
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let surface_texture = self.surface.get_current_texture()?;
-
-        let view = surface_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
+    pub fn render(
+        &mut self,
+        window: &Window,
+        platform: &mut egui_winit_platform::Platform,
+    ) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render enconder"),
             });
+
+        let surface_texture = self.surface.get_current_texture()?;
+
+        let view = surface_texture
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
         {
             let mut render = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -296,6 +310,9 @@ impl Renderer {
             );
             render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
         }
+        let mut ui_renderer = UIRenderer::new(&mut encoder, self);
+        ui_renderer.draw_egui(&surface_texture, platform, window.scale_factor() as f32);
+
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
         Ok(())

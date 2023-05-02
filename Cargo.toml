@@ -12,6 +12,10 @@ pollster = "0.3.0"
 vek = "0.15.10"
 wgpu = "0.16.0"
 winit = "0.28.3"
+# UI
+egui = "0.21.0"
+egui_wgpu_backend = "0.23.0"
+egui_winit_platform = "0.18.0"
 
 [dependencies.bytemuck]
 version = "1.13.1"
