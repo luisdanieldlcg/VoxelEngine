@@ -5,6 +5,8 @@ mod ui;
 mod uniforms;
 mod vertex;
 
+use crate::ui::EguiInstance;
+
 use self::{
     buffer::Buffer,
     camera::CameraController,
@@ -33,11 +35,12 @@ pub struct Renderer {
     transform_bind_group: wgpu::BindGroup,
     camera_controller: camera::CameraController,
     egui_render_pass: egui_wgpu_backend::RenderPass,
+    pub gui: EguiInstance,
 }
 
 impl Renderer {
     // Creating some of the wgpu types requires async code
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: &Window, gui: EguiInstance) -> Self {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             dx12_shader_compiler: Default::default(),
@@ -232,6 +235,7 @@ impl Renderer {
             transform_uniform,
             camera_controller: CameraController::new(),
             egui_render_pass,
+            gui,
         }
     }
 
@@ -268,7 +272,6 @@ impl Renderer {
     pub fn render(
         &mut self,
         window: &Window,
-        platform: &mut egui_winit_platform::Platform,
     ) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
@@ -311,7 +314,7 @@ impl Renderer {
             render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
-        ui_renderer.draw_egui(&surface_texture, platform, window.scale_factor() as f32);
+        ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
 
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();

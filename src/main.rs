@@ -18,10 +18,10 @@ pub fn run() {
         .build(&event_loop)
         .expect("Failed to create window");
 
-    let mut renderer = pollster::block_on(renderer::Renderer::new(&window));
     let mut gui = EguiInstance::new(&window);
+    let mut renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
     event_loop.run(move |generic_event, _, control_flow| {
-        gui.platform.handle_event(&generic_event);
+        renderer.gui.platform.handle_event(&generic_event);
 
         match generic_event {
             Event::WindowEvent {
@@ -43,7 +43,7 @@ pub fn run() {
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
                 renderer.update();
-                match renderer.render(&window, &mut gui.platform) {
+                match renderer.render(&window) {
                     Ok(_) => {}
                     Err(e) => eprintln!("{:?}", e),
                 }

@@ -1,7 +1,6 @@
-use egui_winit_platform::Platform;
 use wgpu::{CommandEncoder, SurfaceTexture};
 
-use crate::renderer::Renderer;
+use crate::{renderer::Renderer, ui::{EguiInstance, self}};
 
 pub struct RendererBorrow<'a> {
     device: &'a wgpu::Device,
@@ -9,11 +8,13 @@ pub struct RendererBorrow<'a> {
     queue: &'a wgpu::Queue,
     egui_render_pass: &'a mut egui_wgpu_backend::RenderPass,
     surface_config: &'a wgpu::SurfaceConfiguration,
+    gui: &'a mut EguiInstance,
 }
 
 pub struct UIRenderer<'frame> {
     renderer: RendererBorrow<'frame>,
 }
+
 impl<'a> RendererBorrow<'a> {
     pub fn new(encoder: &'a mut wgpu::CommandEncoder, renderer: &'a mut Renderer) -> Self {
         Self {
@@ -22,6 +23,8 @@ impl<'a> RendererBorrow<'a> {
             device: &renderer.device,
             egui_render_pass: &mut renderer.egui_render_pass,
             surface_config: &renderer.config,
+            gui: &mut renderer.gui,
+            
         }
     }
 }
@@ -31,21 +34,18 @@ impl<'frame> UIRenderer<'frame> {
         Self { renderer }
     }
 
-    pub fn draw_egui(&mut self, tex: &SurfaceTexture, platform: &mut Platform, scale_factor: f32) {
-        platform.begin_frame();
-        egui::Window::new("EGUI Instance")
-            .default_size([340.0, 700.0])
-            .show(&platform.context(), |ui| {
-                ui.label("Camera Settings");
-            });
-        let output = platform.end_frame(None);
+    pub fn draw_egui(&mut self, tex: &SurfaceTexture, scale_factor: f32) {
+        self.renderer.gui.platform.begin_frame();
+        // Draw UI
+        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.gui.state);
+        let output = self.renderer.gui.platform.end_frame(None);
 
-        let paint_jobs = platform.context().tessellate(output.shapes);
+        let paint_jobs = self.renderer.gui.platform.context().tessellate(output.shapes);
 
         let screen_descriptor = egui_wgpu_backend::ScreenDescriptor {
             physical_width: self.renderer.surface_config.width,
             physical_height: self.renderer.surface_config.height,
-            scale_factor: scale_factor,
+            scale_factor,
         };
 
         let texture_delta = output.textures_delta;
