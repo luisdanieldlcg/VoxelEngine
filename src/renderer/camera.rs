@@ -4,9 +4,14 @@ use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 use super::uniforms::TransformUniform;
 
 pub struct Camera {
-    pos: Vec3<f32>,
-    target: Vec3<f32>,
-    up: Vec3<f32>,
+    pub pos: Vec3<f32>,
+    pub target: Vec3<f32>,
+    pub up: Vec3<f32>,
+    pub fov_y_deg: f32,
+    pub width: f32,
+    pub height: f32,
+    pub near_plane: f32,
+    pub far_plane: f32,
 }
 pub struct CameraController {
     // camera: Camera,
@@ -22,11 +27,22 @@ impl Camera {
             pos: Vec3::new(0.0, 0.0, 10.0),
             target: Vec3::zero(),
             up: Vec3::unit_y(),
+            fov_y_deg: 90.0,
+            width: 800.0,
+            height: 600.0,
+            near_plane: 0.1,
+            far_plane: 100.0,
         }
     }
     pub fn update_proj(&self) -> Mat4<f32> {
         let view = Mat4::<f32>::look_at_rh(self.pos, self.target, self.up);
-        let projection = Mat4::perspective_fov_rh_zo(0.5, 800.0, 600.0, 0.1, 100.0);
+        let projection = Mat4::perspective_fov_rh_zo(
+            self.fov_y_deg.to_radians(),
+            self.width,
+            self.height,
+            self.near_plane,
+            self.far_plane,
+        );
         projection * view
     }
 }

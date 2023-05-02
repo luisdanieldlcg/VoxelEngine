@@ -1,5 +1,5 @@
 mod buffer;
-mod camera;
+pub mod camera;
 mod texture;
 mod ui;
 mod uniforms;
@@ -9,7 +9,7 @@ use crate::ui::EguiInstance;
 
 use self::{
     buffer::Buffer,
-    camera::{CameraController, Camera},
+    camera::{Camera, CameraController},
     texture::Texture,
     ui::UIRenderer,
     uniforms::TransformUniform,
@@ -271,10 +271,7 @@ impl Renderer {
             .update(&self.queue, &[new_transform], 0)
     }
 
-    pub fn render(
-        &mut self,
-        window: &Window,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, window: &Window) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {

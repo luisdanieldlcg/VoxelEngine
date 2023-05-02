@@ -1,6 +1,9 @@
 use wgpu::{CommandEncoder, SurfaceTexture};
 
-use crate::{renderer::Renderer, ui::{EguiInstance, self}};
+use crate::{
+    renderer::Renderer,
+    ui::{self, EguiInstance},
+};
 
 use super::camera::Camera;
 
@@ -41,10 +44,15 @@ impl<'frame> UIRenderer<'frame> {
         self.renderer.gui.platform.begin_frame();
         // Draw UI
 
-        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.gui.state);
+        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.camera);
         let output = self.renderer.gui.platform.end_frame(None);
 
-        let paint_jobs = self.renderer.gui.platform.context().tessellate(output.shapes);
+        let paint_jobs = self
+            .renderer
+            .gui
+            .platform
+            .context()
+            .tessellate(output.shapes);
 
         let screen_descriptor = egui_wgpu_backend::ScreenDescriptor {
             physical_width: self.renderer.surface_config.width,
