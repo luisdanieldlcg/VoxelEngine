@@ -30,7 +30,6 @@ impl EguiInstance {
             state: Default::default(),
         }
     }
-  
 }
 
 pub fn draw_camera_settings(platform: &mut Platform, state: &mut UIState) {

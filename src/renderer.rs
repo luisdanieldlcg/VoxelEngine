@@ -9,7 +9,7 @@ use crate::ui::EguiInstance;
 
 use self::{
     buffer::Buffer,
-    camera::CameraController,
+    camera::{CameraController, Camera},
     texture::Texture,
     ui::UIRenderer,
     uniforms::TransformUniform,
@@ -35,6 +35,7 @@ pub struct Renderer {
     transform_bind_group: wgpu::BindGroup,
     camera_controller: camera::CameraController,
     egui_render_pass: egui_wgpu_backend::RenderPass,
+    camera: camera::Camera,
     pub gui: EguiInstance,
 }
 
@@ -236,6 +237,7 @@ impl Renderer {
             camera_controller: CameraController::new(),
             egui_render_pass,
             gui,
+            camera: Camera::new(),
         }
     }
 
@@ -264,7 +266,7 @@ impl Renderer {
     }
 
     pub fn update(&mut self) {
-        let new_transform = self.camera_controller.update();
+        let new_transform = self.camera_controller.update(&mut self.camera);
         self.transform_buffer
             .update(&self.queue, &[new_transform], 0)
     }

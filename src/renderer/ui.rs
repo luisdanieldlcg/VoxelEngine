@@ -2,6 +2,8 @@ use wgpu::{CommandEncoder, SurfaceTexture};
 
 use crate::{renderer::Renderer, ui::{EguiInstance, self}};
 
+use super::camera::Camera;
+
 pub struct RendererBorrow<'a> {
     device: &'a wgpu::Device,
     encoder: &'a mut wgpu::CommandEncoder,
@@ -9,6 +11,7 @@ pub struct RendererBorrow<'a> {
     egui_render_pass: &'a mut egui_wgpu_backend::RenderPass,
     surface_config: &'a wgpu::SurfaceConfiguration,
     gui: &'a mut EguiInstance,
+    camera: &'a mut Camera,
 }
 
 pub struct UIRenderer<'frame> {
@@ -24,7 +27,7 @@ impl<'a> RendererBorrow<'a> {
             egui_render_pass: &mut renderer.egui_render_pass,
             surface_config: &renderer.config,
             gui: &mut renderer.gui,
-            
+            camera: &mut renderer.camera,
         }
     }
 }
@@ -37,6 +40,7 @@ impl<'frame> UIRenderer<'frame> {
     pub fn draw_egui(&mut self, tex: &SurfaceTexture, scale_factor: f32) {
         self.renderer.gui.platform.begin_frame();
         // Draw UI
+
         ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.gui.state);
         let output = self.renderer.gui.platform.end_frame(None);
 

@@ -9,7 +9,7 @@ pub struct Camera {
     up: Vec3<f32>,
 }
 pub struct CameraController {
-    camera: Camera,
+    // camera: Camera,
     is_forward: bool,
     is_backward: bool,
     is_left: bool,
@@ -34,7 +34,7 @@ impl Camera {
 impl CameraController {
     pub fn new() -> Self {
         Self {
-            camera: Camera::new(),
+            // camera: Camera::new(),
             is_forward: false,
             is_backward: false,
             is_left: false,
@@ -42,9 +42,9 @@ impl CameraController {
         }
     }
 
-    pub fn update(&mut self) -> TransformUniform {
-        let proj = self.camera.update_proj();
-        let forward = self.camera.target - self.camera.pos;
+    pub fn update(&mut self, camera: &mut Camera) -> TransformUniform {
+        let proj = camera.update_proj();
+        let forward = camera.target - camera.pos;
 
         TransformUniform::new(proj)
     }
