@@ -12,7 +12,7 @@ use self::{
     buffer::Buffer,
     camera::{Camera, CameraController},
     cube::CubePipeline,
-    mesh::{vertex::Vertex, Quad, Triangle, Mesh},
+    mesh::{vertex::Vertex, Mesh, Quad, Triangle},
     texture::Texture,
     ui::UIRenderer,
     uniforms::TransformUniform,
@@ -181,20 +181,9 @@ impl Renderer {
             &config,
             &[&texture_bind_group_layout, &transform_bind_group_layout],
         );
-        // let mut mesh = mesh::Mesh::<Vertex>::new();
-
-        // let v1 = Vertex::new(0.5, 0.5, 0.0);
-        // let v2 = Vertex::new(-0.5, 0.5, 0.0);
-        // let v3 = Vertex::new(-0.5, -0.5, 0.0);
-        // let v4 = Vertex::new(0.5, -0.5, 0.0);
-
-        // let quad = Quad::new(v1, v2, v3, v4);
-        // mesh.push_quad(quad);
         let cube = Mesh::<Vertex>::cube();
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, cube.vertices());
-        let quad_index_buffer =
-            Buffer::new(&device, wgpu::BufferUsages::INDEX, &[0, 1, 2, 2, 1, 3]);
-        // let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
+        let quad_index_buffer = create_quad_index_buffer(&device);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
         surface.configure(&device, &config);
@@ -215,7 +204,7 @@ impl Renderer {
             camera_controller: CameraController::new(),
             egui_render_pass,
             gui,
-            camera: Camera::new(),
+            camera: Camera::new(size.width as f32, size.height as f32),
             mesh: cube,
         }
     }
@@ -285,12 +274,12 @@ impl Renderer {
             render.set_bind_group(0, &self.texture_bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.quad_buffer.buf.slice(..));
-            // render.set_index_buffer(
-            //     self.quad_index_buffer.buf.slice(..),
-            //     wgpu::IndexFormat::Uint16,
-            // );
-            // render.draw_indexed(0..6 as u32, 0, 0..1)
-            render.draw(0..self.mesh.vertices().len() as u32, 0..1);
+            render.set_index_buffer(
+                self.quad_index_buffer.buf.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            render.draw_indexed(0..self.quad_index_buffer.len() as u32, 0, 0..1)
+            // render.draw(0..self.mesh.vertices().len() as u32, 0..1);
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
@@ -299,4 +288,18 @@ impl Renderer {
         surface_texture.present();
         Ok(())
     }
+}
+
+pub fn create_quad_index_buffer(device: &wgpu::Device) -> Buffer<u16> {
+    let vert_length = 24;
+    let indices = [0, 1, 2, 2, 1, 3]
+        .iter()
+        .cycle()
+        .copied()
+        .take(vert_length / 4 * 6)
+        .enumerate()
+        .map(|(i, b)| (i / 6 * 4 + b) as u16)
+        .collect::<Vec<_>>();
+    println!("{}", indices.len());
+    Buffer::new(&device, wgpu::BufferUsages::INDEX, &indices)
 }

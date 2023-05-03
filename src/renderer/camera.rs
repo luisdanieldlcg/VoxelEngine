@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
@@ -12,6 +14,7 @@ pub struct Camera {
     pub height: f32,
     pub near_plane: f32,
     pub far_plane: f32,
+    time: std::time::Instant,
 }
 pub struct CameraController {
     // camera: Camera,
@@ -22,16 +25,17 @@ pub struct CameraController {
 }
 
 impl Camera {
-    pub fn new() -> Self {
+    pub fn new(width: f32, height: f32) -> Self {
         Self {
             pos: Vec3::new(0.0, 0.0, 10.0),
             target: Vec3::zero(),
             up: Vec3::unit_y(),
             fov_y_deg: 20.0,
-            width: 800.0,
-            height: 600.0,
+            width,
+            height,
             near_plane: 0.1,
             far_plane: 100.0,
+            time: Instant::now(),
         }
     }
     pub fn update_proj(&self) -> Mat4<f32> {
@@ -43,7 +47,8 @@ impl Camera {
             self.near_plane,
             self.far_plane,
         );
-        projection * view
+        let rot = Mat4::rotation_z(self.time.elapsed().as_secs_f32() * 15.0f32.to_radians());
+        rot * projection * view
     }
 }
 

@@ -1,5 +1,6 @@
 use ui::EguiInstance;
 use winit::{
+    dpi::LogicalSize,
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
@@ -15,11 +16,13 @@ pub fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
+        .with_inner_size(LogicalSize::new(800, 600))
         .build(&event_loop)
         .expect("Failed to create window");
 
-    let mut gui = EguiInstance::new(&window);
+    let gui = EguiInstance::new(&window);
     let mut renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
+
     event_loop.run(move |generic_event, _, control_flow| {
         renderer.gui.platform.handle_event(&generic_event);
 
