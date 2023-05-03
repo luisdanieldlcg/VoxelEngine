@@ -1,4 +1,4 @@
-use super::vertex;
+use super::mesh::{vertex::Vertex, Mesh};
 
 pub struct CubePipeline {
     pub pipeline: wgpu::RenderPipeline,
@@ -24,7 +24,7 @@ impl CubePipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[vertex::Vertex::desc()],
+                buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,

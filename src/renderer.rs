@@ -5,7 +5,6 @@ mod mesh;
 mod texture;
 mod ui;
 mod uniforms;
-mod vertex;
 
 use crate::ui::EguiInstance;
 
@@ -13,11 +12,10 @@ use self::{
     buffer::Buffer,
     camera::{Camera, CameraController},
     cube::CubePipeline,
-    mesh::Triangle,
+    mesh::{vertex::Vertex, Quad, Triangle, Mesh},
     texture::Texture,
     ui::UIRenderer,
     uniforms::TransformUniform,
-    vertex::{Vertex, POLYGON_INDICES, POLYGON_VERTICES},
 };
 use vek::Mat4;
 use wgpu::BindGroupEntry;
@@ -30,8 +28,8 @@ pub struct Renderer {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     cube_pipeline: CubePipeline,
-    polygon_buffer: Buffer<Vertex>,
-    // polygon_index_buffer: Buffer<u16>,
+    quad_buffer: Buffer<Vertex>,
+    quad_index_buffer: Buffer<u16>,
     mesh: mesh::Mesh<Vertex>,
     texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
@@ -183,15 +181,19 @@ impl Renderer {
             &config,
             &[&texture_bind_group_layout, &transform_bind_group_layout],
         );
-        let mut mesh = mesh::Mesh::<Vertex>::new();
+        // let mut mesh = mesh::Mesh::<Vertex>::new();
 
-        let v1 = Vertex::new(0.0, 0.5, 0.0);
-        let v2 = Vertex::new(-0.5, -0.5, 0.0);
-        let v3 = Vertex::new(0.5, -0.5, 0.0);
-        let tri = Triangle::new(v1, v2, v3);
-        mesh.push_triangle(tri);
+        // let v1 = Vertex::new(0.5, 0.5, 0.0);
+        // let v2 = Vertex::new(-0.5, 0.5, 0.0);
+        // let v3 = Vertex::new(-0.5, -0.5, 0.0);
+        // let v4 = Vertex::new(0.5, -0.5, 0.0);
 
-        let polygon_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, mesh.vertices());
+        // let quad = Quad::new(v1, v2, v3, v4);
+        // mesh.push_quad(quad);
+        let cube = Mesh::<Vertex>::cube();
+        let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, cube.vertices());
+        let quad_index_buffer =
+            Buffer::new(&device, wgpu::BufferUsages::INDEX, &[0, 1, 2, 2, 1, 3]);
         // let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
@@ -203,8 +205,8 @@ impl Renderer {
             queue,
             config,
             cube_pipeline: pipeline,
-            polygon_buffer,
-            // polygon_index_buffer,
+            quad_buffer,
+            quad_index_buffer,
             texture_bind_group,
             size,
             transform_buffer,
@@ -214,7 +216,7 @@ impl Renderer {
             egui_render_pass,
             gui,
             camera: Camera::new(),
-            mesh,
+            mesh: cube,
         }
     }
 
@@ -282,13 +284,13 @@ impl Renderer {
             render.set_pipeline(&self.cube_pipeline.pipeline);
             render.set_bind_group(0, &self.texture_bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
-            render.set_vertex_buffer(0, self.polygon_buffer.buf.slice(..));
+            render.set_vertex_buffer(0, self.quad_buffer.buf.slice(..));
             // render.set_index_buffer(
-            //     self.polygon_index_buffer.buf.slice(..),
+            //     self.quad_index_buffer.buf.slice(..),
             //     wgpu::IndexFormat::Uint16,
             // );
-            render.draw(0..self.mesh.vertices().len() as u32, 0..1)
-            // render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
+            // render.draw_indexed(0..6 as u32, 0, 0..1)
+            render.draw(0..self.mesh.vertices().len() as u32, 0..1);
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
