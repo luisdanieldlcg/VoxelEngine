@@ -27,7 +27,7 @@ impl Camera {
             pos: Vec3::new(0.0, 0.0, 10.0),
             target: Vec3::zero(),
             up: Vec3::unit_y(),
-            fov_y_deg: 90.0,
+            fov_y_deg: 20.0,
             width: 800.0,
             height: 600.0,
             near_plane: 0.1,

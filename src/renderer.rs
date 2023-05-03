@@ -1,5 +1,7 @@
 mod buffer;
 pub mod camera;
+mod cube;
+mod mesh;
 mod texture;
 mod ui;
 mod uniforms;
@@ -10,6 +12,8 @@ use crate::ui::EguiInstance;
 use self::{
     buffer::Buffer,
     camera::{Camera, CameraController},
+    cube::CubePipeline,
+    mesh::Triangle,
     texture::Texture,
     ui::UIRenderer,
     uniforms::TransformUniform,
@@ -25,9 +29,10 @@ pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    pipeline: wgpu::RenderPipeline,
+    cube_pipeline: CubePipeline,
     polygon_buffer: Buffer<Vertex>,
-    polygon_index_buffer: Buffer<u16>,
+    // polygon_index_buffer: Buffer<u16>,
+    mesh: mesh::Mesh<Vertex>,
     texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
     transform_uniform: TransformUniform,
@@ -172,51 +177,22 @@ impl Renderer {
             }],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Pipeline layout"),
-            // Determines the order of our bind groups
-            // for example, texture_bind_group_layout will be at group(0)
-            bind_group_layouts: &[&texture_bind_group_layout, &transform_bind_group_layout],
-            push_constant_ranges: &[],
-        });
+        let pipeline = CubePipeline::new(
+            &device,
+            &shader,
+            &config,
+            &[&texture_bind_group_layout, &transform_bind_group_layout],
+        );
+        let mut mesh = mesh::Mesh::<Vertex>::new();
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        let v1 = Vertex::new(0.0, 0.5, 0.0);
+        let v2 = Vertex::new(-0.5, -0.5, 0.0);
+        let v3 = Vertex::new(0.5, -0.5, 0.0);
+        let tri = Triangle::new(v1, v2, v3);
+        mesh.push_triangle(tri);
 
-        let polygon_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, POLYGON_VERTICES);
-        let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
+        let polygon_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, mesh.vertices());
+        // let polygon_index_buffer = Buffer::new(&device, wgpu::BufferUsages::INDEX, POLYGON_INDICES);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
         surface.configure(&device, &config);
@@ -226,9 +202,9 @@ impl Renderer {
             device,
             queue,
             config,
-            pipeline,
+            cube_pipeline: pipeline,
             polygon_buffer,
-            polygon_index_buffer,
+            // polygon_index_buffer,
             texture_bind_group,
             size,
             transform_buffer,
@@ -238,6 +214,7 @@ impl Renderer {
             egui_render_pass,
             gui,
             camera: Camera::new(),
+            mesh,
         }
     }
 
@@ -302,15 +279,16 @@ impl Renderer {
                 })],
                 depth_stencil_attachment: None,
             });
-            render.set_pipeline(&self.pipeline);
+            render.set_pipeline(&self.cube_pipeline.pipeline);
             render.set_bind_group(0, &self.texture_bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.polygon_buffer.buf.slice(..));
-            render.set_index_buffer(
-                self.polygon_index_buffer.buf.slice(..),
-                wgpu::IndexFormat::Uint16,
-            );
-            render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
+            // render.set_index_buffer(
+            //     self.polygon_index_buffer.buf.slice(..),
+            //     wgpu::IndexFormat::Uint16,
+            // );
+            render.draw(0..self.mesh.vertices().len() as u32, 0..1)
+            // render.draw_indexed(0..POLYGON_INDICES.len() as u32, 0, 0..1)
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
