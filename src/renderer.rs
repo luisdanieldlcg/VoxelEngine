@@ -6,6 +6,8 @@ mod texture;
 mod ui;
 mod uniforms;
 
+use std::time::Duration;
+
 use crate::ui::EguiInstance;
 
 use self::{
@@ -222,22 +224,16 @@ impl Renderer {
         }
     }
 
-    /// Handle window events e.g keyboard or mouse
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
-        return match event {
-            WindowEvent::KeyboardInput { input, .. } => {
-                return self.camera_controller.handle_keyboard_events(&input);
-            }
-            WindowEvent::MouseInput { .. } => {
-                self.camera_controller.handle_mouse_events();
-                true
-            }
-            _ => false,
-        };
+    pub fn on_key_pressed(&mut self, input: &winit::event::KeyboardInput) {
+        self.camera_controller.handle_keyboard_events(input);
     }
 
-    pub fn update(&mut self) {
-        let new_transform = self.camera_controller.update(&mut self.camera);
+    pub fn on_mouse_motion(&mut self, delta: (f64, f64)) {
+        self.camera_controller.handle_mouse_events(delta.0, delta.1);
+    }
+
+    pub fn update(&mut self, dt: Duration) {
+        let new_transform = self.camera_controller.update(&mut self.camera, dt);
         self.transform_buffer
             .update(&self.queue, &[new_transform], 0)
     }

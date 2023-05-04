@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use ui::EguiInstance;
 use winit::{
     dpi::LogicalSize,
@@ -22,38 +24,44 @@ pub fn run() {
 
     let gui = EguiInstance::new(&window);
     let mut renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
-
+    let mut render_delta = Instant::now();
     event_loop.run(move |generic_event, _, control_flow| {
         renderer.gui.platform.handle_event(&generic_event);
-
+        *control_flow = ControlFlow::Poll;
         match generic_event {
             Event::WindowEvent {
                 ref event,
                 window_id,
             } if window_id == window.id() => {
-                if !renderer.input(event) {
-                    match event {
-                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                        WindowEvent::Resized(size) => {
-                            renderer.resize(*size);
-                        }
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            renderer.resize(**new_inner_size);
-                        }
-                        _ => {}
-                    };
-                }
+                match event {
+                    WindowEvent::KeyboardInput { input, .. } => renderer.on_key_pressed(input),
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    WindowEvent::Resized(size) => {
+                        renderer.resize(*size);
+                    }
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        renderer.resize(**new_inner_size);
+                    }
+                    _ => {}
+                };
+            }
+            Event::DeviceEvent {
+                event: winit::event::DeviceEvent::MouseMotion { delta },
+                ..
+            } => {
+                renderer.on_mouse_motion(delta);
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
-                renderer.update();
+                let now = Instant::now();
+                let dt = now - render_delta;
+                render_delta = now;
+                renderer.update(dt);
                 match renderer.render(&window) {
                     Ok(_) => {}
                     Err(e) => eprintln!("{:?}", e),
                 }
             }
-            Event::MainEventsCleared => {
-                window.request_redraw();
-            }
+            Event::MainEventsCleared => window.request_redraw(),
             _ => {}
         }
     });
