@@ -1,19 +1,20 @@
 use vek::Mat4;
 
+use super::camera::Camera;
+
 #[repr(C)]
-// This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct TransformUniform {
+pub struct CameraUniform {
     pub transform: [[f32; 4]; 4],
 }
-impl TransformUniform {
+impl CameraUniform {
     pub fn new(mat: vek::Mat4<f32>) -> Self {
         Self {
             transform: mat.into_col_arrays(),
         }
     }
-    pub fn update(&mut self, mat: vek::Mat4<f32>) {
-        self.transform = mat.into_col_arrays();
+    pub fn update(&mut self, camera: &Camera) {
+        self.transform = camera.update_proj().into_col_arrays();
     }
 
     pub fn empty() -> Self {

@@ -42,6 +42,9 @@ pub fn run() {
                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         renderer.resize(**new_inner_size);
                     }
+                    WindowEvent::CursorMoved { position, .. } => {
+                        renderer.on_cursor_moved((position.x as f32, position.y as f32));
+                    }
                     _ => {}
                 };
             }

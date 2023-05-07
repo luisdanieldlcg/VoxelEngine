@@ -1,9 +1,9 @@
 use std::time::{Duration, Instant};
 
-use vek::{serde::__private::de, transform, Mat4, Vec3};
+use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
-use super::uniforms::TransformUniform;
+use super::uniforms::CameraUniform;
 
 type Point3 = Vec3<f32>;
 
@@ -18,20 +18,8 @@ pub struct Camera {
     pub height: f32,
     pub near_plane: f32,
     pub far_plane: f32,
-    dt: std::time::Instant,
-}
-pub struct CameraController {
-    // camera: Camera,
-    amount_left: f32,
-    amount_right: f32,
-    amount_forward: f32,
-    amount_backward: f32,
-    amount_up: f32,
-    amount_down: f32,
-    mouse_dx: f32,
-    mouse_dy: f32,
-    speed: f32,
-    sensitivity: f32,
+    last_x: f32,
+    last_y: f32,
 }
 
 impl Camera {
@@ -45,32 +33,53 @@ impl Camera {
             height,
             near_plane: 0.1,
             far_plane: 100.0,
-            dt: Instant::now(),
             yaw: -90.0, // Point torwards -Z,
             pitch: 20.0,
+            last_x: width / 2.0,
+            last_y: height / 2.0,
         }
     }
+    pub fn translate(&mut self, offset: Vec3<f32>) {
+        self.pos += offset;
+    }
+
+    pub fn rotate(&mut self, x: f32, y: f32) {
+        self.yaw += x;
+        self.pitch += y;
+
+        let (yaw_sin, yaw_cos) = self.yaw.to_radians().sin_cos();
+        let (pitch_sin, pitch_cos) = self.pitch.to_radians().sin_cos();
+        let rotation = Vec3::new(yaw_cos * pitch_cos, pitch_sin, yaw_sin * pitch_cos).normalized();
+        self.target = rotation;
+    }
+
     pub fn update_proj(&self) -> Mat4<f32> {
-        let (sin_pitch, cos_pitch) = self.pitch.sin_cos();
-        let (sin_yaw, cos_yaw) = self.yaw.sin_cos();
-        let new_rotation =
-            Vec3::new(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalized();
-        let view = Mat4::<f32>::look_at_rh(self.pos, new_rotation, self.up);
-        let projection = Mat4::perspective_fov_rh_zo(
+        let proj = Mat4::perspective_rh_zo(
             self.fov_y_deg.to_radians(),
-            self.width,
-            self.height,
+            self.width / self.height,
             self.near_plane,
             self.far_plane,
         );
-        projection * view
+        let view = Mat4::look_at_rh(self.pos, self.pos + self.target, self.up);
+        proj * view
     }
 }
 
+pub struct CameraController {
+    amount_left: f32,
+    amount_right: f32,
+    amount_forward: f32,
+    amount_backward: f32,
+    amount_up: f32,
+    amount_down: f32,
+    mouse_dx: f32,
+    mouse_dy: f32,
+    speed: f32,
+    sensitivity: f32,
+}
 impl CameraController {
     pub fn new() -> Self {
         Self {
-            // camera: Camera::new(),
             amount_left: 0.0,
             amount_right: 0.0,
             amount_forward: 0.0,
@@ -80,41 +89,38 @@ impl CameraController {
             mouse_dx: 0.0,
             mouse_dy: 0.0,
             speed: 4.0,
-            sensitivity: 0.4,
+            sensitivity: 0.1,
         }
     }
 
-    pub fn update(&mut self, camera: &mut Camera, dt: Duration) -> TransformUniform {
+    pub fn update(&mut self, camera: &mut Camera, dt: Duration, mouse_pos: (f32, f32)) {
         let dt = dt.as_secs_f32();
-        let speed = self.speed;
-        let sensitivity = self.sensitivity;
         let (yaw_sin, yaw_cos) = camera.yaw.to_radians().sin_cos();
-        let forward = Vec3::new(yaw_cos, 0.0, yaw_sin).normalized();
-        let right = Vec3::new(-yaw_sin, 0.0, yaw_cos).normalized();
-        camera.pos += forward * speed * (self.amount_forward - self.amount_backward) * speed * dt;
-        camera.pos += right * speed * (self.amount_right - self.amount_left) * speed * dt;
+        let forward = Vec3::new(yaw_cos, 0.0, yaw_sin);
+        let right = Vec3::new(-yaw_sin, 0.0, yaw_cos);
+        let multiplier = self.speed * dt;
+        
+        // Translation in x y z
+        let dx = forward * (self.amount_forward - self.amount_backward) * multiplier;
+        let dy = Vec3::new(0.0, (self.amount_up - self.amount_down) * multiplier, 0.0);
+        let dz = right * (self.amount_right - self.amount_left) * multiplier;
 
-        camera.pos.y += (self.amount_up - self.amount_down) * speed * dt;
+        // Translate using WASD or arrow keys
+        camera.translate(dx);
+        camera.translate(dy);
+        camera.translate(dz);
 
-        camera.yaw += self.mouse_dx  * sensitivity * dt * 12.0;
-        camera.pitch += - self.mouse_dy  * sensitivity * dt * 12.0;
+        let offset_x = (mouse_pos.0 - camera.last_x) * self.sensitivity;
+        let offset_y = (mouse_pos.1 - camera.last_y) * self.sensitivity;
+        
+        camera.last_x = mouse_pos.0;
+        camera.last_y = mouse_pos.1;
 
-        self.mouse_dx = 0.0;
-        self.mouse_dy = 0.0;
-
-        if camera.pitch > 89.0 {
-            camera.pitch = 89.0;
-        }
-        if camera.pitch < -89.0 {
-            camera.pitch = -89.0;
-        }
-
-        let proj = camera.update_proj();
-
-        TransformUniform::new(proj)
+        // Rotate using the mouse
+        camera.rotate(offset_x, -offset_y);
     }
 
-    pub fn handle_keyboard_events(&mut self, input: &KeyboardInput) -> bool {
+    pub fn handle_keyboard_events(&mut self, input: &KeyboardInput) {
         let amount = if input.state == ElementState::Pressed {
             1.0
         } else {
@@ -124,32 +130,25 @@ impl CameraController {
             return match key {
                 VirtualKeyCode::W | VirtualKeyCode::Up => {
                     self.amount_forward = amount;
-                    true
                 }
                 VirtualKeyCode::S | VirtualKeyCode::Down => {
                     self.amount_backward = amount;
-                    true
                 }
                 VirtualKeyCode::A | VirtualKeyCode::Left => {
                     self.amount_left = amount;
-                    true
                 }
                 VirtualKeyCode::D | VirtualKeyCode::Right => {
                     self.amount_right = amount;
-                    true
                 }
                 VirtualKeyCode::Space => {
                     self.amount_up = amount;
-                    true
                 }
                 VirtualKeyCode::LShift => {
                     self.amount_down = amount;
-                    true
                 }
-                _ => false,
+                _ => (),
             };
         }
-        false
     }
 
     pub fn handle_mouse_events(&mut self, delta_x: f64, delta_y: f64) {

@@ -17,7 +17,7 @@ use self::{
     mesh::{vertex::Vertex, Mesh, Quad, Triangle},
     texture::Texture,
     ui::UIRenderer,
-    uniforms::TransformUniform,
+    uniforms::CameraUniform,
 };
 use vek::Mat4;
 use wgpu::BindGroupEntry;
@@ -35,13 +35,14 @@ pub struct Renderer {
     mesh: mesh::Mesh<Vertex>,
     texture_bind_group: wgpu::BindGroup,
     size: winit::dpi::PhysicalSize<u32>,
-    transform_uniform: TransformUniform,
-    transform_buffer: Buffer<TransformUniform>,
+    camera_uniform: CameraUniform,
+    transform_buffer: Buffer<CameraUniform>,
     transform_bind_group: wgpu::BindGroup,
     camera_controller: camera::CameraController,
     egui_render_pass: egui_wgpu_backend::RenderPass,
     camera: camera::Camera,
     pub gui: EguiInstance,
+    cursor_pos: (f32, f32),
 }
 
 impl Renderer {
@@ -146,12 +147,14 @@ impl Renderer {
                 },
             ],
         });
-        let transform_uniform = TransformUniform::new(Mat4::identity());
+        let camera = Camera::new(size.width as f32, size.height as f32);
+        let mut camera_uniform = CameraUniform::empty();
+        camera_uniform.update(&camera);
 
         let transform_buffer = Buffer::new(
             &device,
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            &[transform_uniform],
+            &[camera_uniform],
         );
 
         let transform_bind_group_layout =
@@ -202,12 +205,13 @@ impl Renderer {
             size,
             transform_buffer,
             transform_bind_group,
-            transform_uniform,
+            camera_uniform,
             camera_controller: CameraController::new(),
             egui_render_pass,
             gui,
-            camera: Camera::new(size.width as f32, size.height as f32),
+            camera,
             mesh: cube,
+            cursor_pos: (0.0, 0.0),
         }
     }
 
@@ -228,14 +232,22 @@ impl Renderer {
         self.camera_controller.handle_keyboard_events(input);
     }
 
+    pub fn on_cursor_moved(&mut self, pos: (f32, f32)) {
+        self.cursor_pos = pos;
+    }
     pub fn on_mouse_motion(&mut self, delta: (f64, f64)) {
         self.camera_controller.handle_mouse_events(delta.0, delta.1);
     }
 
     pub fn update(&mut self, dt: Duration) {
-        let new_transform = self.camera_controller.update(&mut self.camera, dt);
-        self.transform_buffer
-            .update(&self.queue, &[new_transform], 0)
+        self.camera_controller
+            .update(&mut self.camera, dt, self.cursor_pos);
+        self.camera_uniform.update(&self.camera);
+        self.queue.write_buffer(
+            &self.transform_buffer.buf,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
     }
 
     pub fn render(&mut self, window: &Window) -> Result<(), wgpu::SurfaceError> {
@@ -299,6 +311,5 @@ pub fn create_quad_index_buffer(device: &wgpu::Device) -> Buffer<u16> {
         .enumerate()
         .map(|(i, b)| (i / 6 * 4 + b) as u16)
         .collect::<Vec<_>>();
-    println!("{}", indices.len());
     Buffer::new(&device, wgpu::BufferUsages::INDEX, &indices)
 }
