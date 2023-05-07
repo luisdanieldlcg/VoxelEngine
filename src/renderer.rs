@@ -14,14 +14,12 @@ use self::{
     buffer::Buffer,
     camera::{Camera, CameraController},
     cube::CubePipeline,
-    mesh::{vertex::Vertex, Mesh, Quad, Triangle},
+    mesh::{vertex::Vertex, Mesh},
     texture::Texture,
     ui::UIRenderer,
     uniforms::CameraUniform,
 };
-use vek::Mat4;
 use wgpu::BindGroupEntry;
-use winit::event::WindowEvent;
 use winit::window::Window;
 
 pub struct Renderer {
@@ -103,11 +101,12 @@ impl Renderer {
 
         let shader =
             device.create_shader_module(wgpu::include_wgsl!("../assets/shaders/vertex.wgsl"));
-
+                                                                                                                                                                                                                                                                                            
         // Texture bind group
 
-        let file = include_bytes!("../assets/stone.jpg");
+        let file = include_bytes!("../assets/atlas.png");
         let texture = Texture::new(&device, &queue, file);
+
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Texture bind group layout"),

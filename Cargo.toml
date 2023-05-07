@@ -24,4 +24,4 @@ features = ["derive"]
 [dependencies.image]
 version = "0.24.6"
 default-features = false
-features = ["jpeg"]
+features = ["jpeg", "png"]

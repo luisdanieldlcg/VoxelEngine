@@ -18,7 +18,8 @@ pub fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
-        .with_inner_size(LogicalSize::new(800, 600))
+        .with_inner_size(LogicalSize::new(1920, 1080))
+        .with_maximized(true)
         .build(&event_loop)
         .expect("Failed to create window");
 

@@ -1,9 +1,7 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
-
-use super::uniforms::CameraUniform;
 
 type Point3 = Vec3<f32>;
 
@@ -39,10 +37,13 @@ impl Camera {
             last_y: height / 2.0,
         }
     }
+
+    /// Translate the camera position
     pub fn translate(&mut self, offset: Vec3<f32>) {
         self.pos += offset;
     }
 
+    /// Rotate around X and Y axis
     pub fn rotate(&mut self, x: f32, y: f32) {
         self.yaw += x;
         self.pitch += y;
@@ -99,7 +100,7 @@ impl CameraController {
         let forward = Vec3::new(yaw_cos, 0.0, yaw_sin);
         let right = Vec3::new(-yaw_sin, 0.0, yaw_cos);
         let multiplier = self.speed * dt;
-        
+
         // Translation in x y z
         let dx = forward * (self.amount_forward - self.amount_backward) * multiplier;
         let dy = Vec3::new(0.0, (self.amount_up - self.amount_down) * multiplier, 0.0);
@@ -112,7 +113,7 @@ impl CameraController {
 
         let offset_x = (mouse_pos.0 - camera.last_x) * self.sensitivity;
         let offset_y = (mouse_pos.1 - camera.last_y) * self.sensitivity;
-        
+
         camera.last_x = mouse_pos.0;
         camera.last_y = mouse_pos.1;
 
