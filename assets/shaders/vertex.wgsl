@@ -30,7 +30,7 @@ var tex_sampler: sampler;
 
 @fragment
 fn fs_main(data: VertexData) -> @location(0) vec4<f32> {
-    return textureSample(texture, tex_sampler, atlas_uv_mapping(0.0, data.pos.x, data.pos.y));
+    return textureSample(texture, tex_sampler, data.texture_pos);
 }
 
 // This function will map the vertices of a quad to texture coordinates

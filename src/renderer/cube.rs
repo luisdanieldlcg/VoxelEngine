@@ -1,4 +1,4 @@
-use super::mesh::{vertex::Vertex, Mesh};
+use super::{mesh::{vertex::Vertex, Mesh}, texture};
 
 pub struct CubePipeline {
     pub pipeline: wgpu::RenderPipeline,
@@ -44,7 +44,16 @@ impl CubePipeline {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(
+                wgpu::DepthStencilState {
+                    format: texture::Texture::DEPTH_FORMAT,
+                    depth_write_enabled:true,
+                    depth_compare:  wgpu::CompareFunction::Less,
+                    stencil:  wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                    
+                }
+            ),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

@@ -1,3 +1,4 @@
+pub mod atlas;
 mod buffer;
 pub mod camera;
 mod cube;
@@ -11,6 +12,7 @@ use std::time::Duration;
 use crate::ui::EguiInstance;
 
 use self::{
+    atlas::{atlas_uv_mapping, Atlas},
     buffer::Buffer,
     camera::{Camera, CameraController},
     cube::CubePipeline,
@@ -30,8 +32,8 @@ pub struct Renderer {
     cube_pipeline: CubePipeline,
     quad_buffer: Buffer<Vertex>,
     quad_index_buffer: Buffer<u16>,
-    mesh: mesh::Mesh<Vertex>,
-    texture_bind_group: wgpu::BindGroup,
+    mesh: mesh::Mesh,
+    atlas: Atlas,
     size: winit::dpi::PhysicalSize<u32>,
     camera_uniform: CameraUniform,
     transform_buffer: Buffer<CameraUniform>,
@@ -41,6 +43,7 @@ pub struct Renderer {
     camera: camera::Camera,
     pub gui: EguiInstance,
     cursor_pos: (f32, f32),
+    depth_texture: Texture,
 }
 
 impl Renderer {
@@ -98,54 +101,16 @@ impl Renderer {
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
+        surface.configure(&device, &config);
 
         let shader =
             device.create_shader_module(wgpu::include_wgsl!("../assets/shaders/vertex.wgsl"));
-                                                                                                                                                                                                                                                                                            
-        // Texture bind group
 
-        let file = include_bytes!("../assets/atlas.png");
-        let texture = Texture::new(&device, &queue, file);
+        let depth_texture: Texture = Texture::with_depth(&config, &device);
 
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Texture bind group layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        // This should match the filterable field of the
-                        // corresponding Texture entry above.
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-            });
+        let texture_atlas = include_bytes!("../assets/atlas.png");
+        let atlas = Atlas::new(texture_atlas, &device, &queue);
 
-        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Texture bind group"),
-            layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&texture.sampler),
-                },
-            ],
-        });
         let camera = Camera::new(size.width as f32, size.height as f32);
         let mut camera_uniform = CameraUniform::empty();
         camera_uniform.update(&camera);
@@ -183,14 +148,15 @@ impl Renderer {
             &device,
             &shader,
             &config,
-            &[&texture_bind_group_layout, &transform_bind_group_layout],
+            &[&atlas.bind_group_layout, &transform_bind_group_layout],
         );
-        let cube = Mesh::<Vertex>::cube();
-        let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, cube.vertices());
+
+        let cube = Mesh::cube();
+
+        let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
         let quad_index_buffer = create_quad_index_buffer(&device);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
-        surface.configure(&device, &config);
 
         Self {
             surface,
@@ -200,7 +166,7 @@ impl Renderer {
             cube_pipeline: pipeline,
             quad_buffer,
             quad_index_buffer,
-            texture_bind_group,
+            atlas,
             size,
             transform_buffer,
             transform_bind_group,
@@ -211,6 +177,7 @@ impl Renderer {
             camera,
             mesh: cube,
             cursor_pos: (0.0, 0.0),
+            depth_texture,
         }
     }
 
@@ -221,9 +188,10 @@ impl Renderer {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-
             self.camera.width = new_size.width as f32;
             self.camera.height = new_size.height as f32;
+            self.depth_texture = Texture::with_depth( &self.config, &self.device);
+
         }
     }
 
@@ -250,17 +218,20 @@ impl Renderer {
     }
 
     pub fn render(&mut self, window: &Window) -> Result<(), wgpu::SurfaceError> {
+
+        let surface_texture: wgpu::SurfaceTexture = self.surface.get_current_texture()?;
+
+
+        let view = surface_texture
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render enconder"),
             });
 
-        let surface_texture = self.surface.get_current_texture()?;
-
-        let view = surface_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
 
         {
             let mut render = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -278,10 +249,21 @@ impl Renderer {
                         store: true,
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(
+                    wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(
+                            wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(1.0),
+                                store: true,
+                            },
+                        ),
+                        stencil_ops: None,
+                    }
+                ),
             });
             render.set_pipeline(&self.cube_pipeline.pipeline);
-            render.set_bind_group(0, &self.texture_bind_group, &[]);
+            render.set_bind_group(0, &self.atlas.bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.quad_buffer.buf.slice(..));
             render.set_index_buffer(
@@ -289,7 +271,6 @@ impl Renderer {
                 wgpu::IndexFormat::Uint16,
             );
             render.draw_indexed(0..self.quad_index_buffer.len() as u32, 0, 0..1)
-            // render.draw(0..self.mesh.vertices().len() as u32, 0..1);
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
