@@ -40,20 +40,3 @@ var tex_sampler: sampler;
 fn fs_main(data: VertexData) -> @location(0) vec4<f32> {
     return textureSample(texture, tex_sampler, data.texture_pos);
 }
-
-// This function will map the vertices of a quad to texture coordinates
-// A few things to consider:
-// First thing is that the block atlas has a size of 256px and is composed of
-// 16x16 textures.
-// In WGPU the origin is located at the top left corner and the y axis is inverted
-// so we need to invert the y axis. Also, the range belongs to [0, 1].
-// Given a texture id, x and y coordinates, this function will return the
-// texture coordinates of the quad.
-// TODO: make this work
-fn atlas_uv_mapping(texture_id: f32, x: f32, y: f32) -> vec2<f32> {
-    let atlas_size = 256.0;
-    let texture_size = 1.0 / 256.0;
-    let u = 0.0;
-    let v = 0.0;
-    return vec2<f32>(u, v);
-}
