@@ -12,7 +12,7 @@ use std::time::Duration;
 use crate::ui::EguiInstance;
 
 use self::{
-    atlas::{atlas_uv_mapping, Atlas},
+    atlas::Atlas,
     buffer::Buffer,
     camera::{Camera, CameraController},
     cube::CubePipeline,
@@ -32,7 +32,6 @@ pub struct Renderer {
     cube_pipeline: CubePipeline,
     quad_buffer: Buffer<Vertex>,
     quad_index_buffer: Buffer<u16>,
-    mesh: mesh::Mesh,
     atlas: Atlas,
     size: winit::dpi::PhysicalSize<u32>,
     camera_uniform: CameraUniform,
@@ -175,7 +174,6 @@ impl Renderer {
             egui_render_pass,
             gui,
             camera,
-            mesh: cube,
             cursor_pos: (0.0, 0.0),
             depth_texture,
         }
@@ -270,6 +268,7 @@ impl Renderer {
                 self.quad_index_buffer.buf.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
+
             render.draw_indexed(0..self.quad_index_buffer.len() as u32, 0, 0..1)
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);

@@ -20,7 +20,6 @@ impl Vertex {
     pub const INDEX_BUFFER_FORMAT: Option<wgpu::IndexFormat> = Some(wgpu::IndexFormat::Uint16);
 
     const ATTRIBUTES: [wgpu::VertexAttribute; 2] =
-        // TODO: remove vertex attribute 1
         wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x2];
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
