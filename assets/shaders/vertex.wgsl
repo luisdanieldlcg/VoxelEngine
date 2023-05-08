@@ -5,6 +5,10 @@ struct Camera {
 @group(1) @binding(0) 
 var<uniform> camera: Camera;
 
+struct CubeInstance {
+   @location(2) pos: vec3<f32>,
+}
+
 struct VertexIn {
     @location(0) pos: vec3<f32>,
     @location(1) texture_pos: vec2<f32>,
@@ -16,10 +20,14 @@ struct VertexData {
 }
 
 @vertex
-fn vs_main(in: VertexIn) -> VertexData {
+fn vs_main(in: VertexIn, instance: CubeInstance) -> VertexData {
     var data: VertexData;
-    data.pos = camera.transform * vec4<f32>(in.pos, 1.0);
     data.texture_pos = in.texture_pos;
+
+    var cube_instance: CubeInstance;
+    cube_instance.pos = instance.pos;
+    let pos = in.pos + cube_instance.pos;
+    data.pos = camera.transform * vec4<f32>(pos, 1.0);
     return data;
 } 
 

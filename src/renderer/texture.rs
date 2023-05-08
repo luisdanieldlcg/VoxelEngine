@@ -7,8 +7,7 @@ pub struct Texture {
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-    pub fn with_depth(sfc_cfg: &wgpu::SurfaceConfiguration,device: &wgpu::Device) -> Self {
-
+    pub fn with_depth(sfc_cfg: &wgpu::SurfaceConfiguration, device: &wgpu::Device) -> Self {
         let size = wgpu::Extent3d {
             width: sfc_cfg.width,
             height: sfc_cfg.height,
@@ -25,7 +24,7 @@ impl Texture {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-       
+
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::Repeat,
@@ -46,13 +45,22 @@ impl Texture {
             sampler,
         }
     }
-    pub fn from_bytes(device: &wgpu::Device, queue: &wgpu::Queue, bytes: &[u8], label: &str) ->Self {
+    pub fn from_bytes(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        bytes: &[u8],
+        label: &str,
+    ) -> Self {
         let img = image::load_from_memory(bytes).unwrap();
         Self::from_image(device, queue, &img, Some(label))
     }
 
-    pub fn from_image(device: &wgpu::Device, queue: &wgpu::Queue, img: &image::DynamicImage, label: Option<&str>) -> Self {
-       
+    pub fn from_image(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        img: &image::DynamicImage,
+        label: Option<&str>,
+    ) -> Self {
         let rgba = img.to_rgba8();
 
         let size = wgpu::Extent3d {
@@ -98,6 +106,10 @@ impl Texture {
             ..Default::default()
         });
 
-        Self { texture, view, sampler }
+        Self {
+            texture,
+            view,
+            sampler,
+        }
     }
 }

@@ -2,10 +2,10 @@ pub mod atlas;
 mod buffer;
 pub mod camera;
 mod cube;
+pub mod instance;
 mod mesh;
 mod texture;
 mod ui;
-mod uniforms;
 
 use std::time::Duration;
 
@@ -14,12 +14,12 @@ use crate::ui::EguiInstance;
 use self::{
     atlas::Atlas,
     buffer::Buffer,
-    camera::{Camera, CameraController},
+    camera::{Camera, CameraController, CameraUniform},
     cube::CubePipeline,
+    instance::Instance,
     mesh::{vertex::Vertex, Mesh},
     texture::Texture,
     ui::UIRenderer,
-    uniforms::CameraUniform,
 };
 use wgpu::BindGroupEntry;
 use winit::window::Window;
@@ -43,6 +43,7 @@ pub struct Renderer {
     pub gui: EguiInstance,
     cursor_pos: (f32, f32),
     depth_texture: Texture,
+    instance_buffer: Buffer<Instance>,
 }
 
 impl Renderer {
@@ -156,6 +157,17 @@ impl Renderer {
         let quad_index_buffer = create_quad_index_buffer(&device);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
+        let mut instances = Vec::new();
+        let block_size = 2.0;
+        let plane_size = 100.0;
+        for x in 0..plane_size as i32 {
+            for z in 0..plane_size as i32 {
+                instances.push(Instance {
+                    transform: [x as f32 * block_size, 0.0, z as f32 * block_size],
+                });
+            }
+        }
+        let instance_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &instances);
 
         Self {
             surface,
@@ -176,6 +188,7 @@ impl Renderer {
             camera,
             cursor_pos: (0.0, 0.0),
             depth_texture,
+            instance_buffer,
         }
     }
 
@@ -188,8 +201,7 @@ impl Renderer {
             self.surface.configure(&self.device, &self.config);
             self.camera.width = new_size.width as f32;
             self.camera.height = new_size.height as f32;
-            self.depth_texture = Texture::with_depth( &self.config, &self.device);
-
+            self.depth_texture = Texture::with_depth(&self.config, &self.device);
         }
     }
 
@@ -216,9 +228,7 @@ impl Renderer {
     }
 
     pub fn render(&mut self, window: &Window) -> Result<(), wgpu::SurfaceError> {
-
         let surface_texture: wgpu::SurfaceTexture = self.surface.get_current_texture()?;
-
 
         let view = surface_texture
             .texture
@@ -229,7 +239,6 @@ impl Renderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render enconder"),
             });
-
 
         {
             let mut render = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -247,29 +256,29 @@ impl Renderer {
                         store: true,
                     },
                 })],
-                depth_stencil_attachment: Some(
-                    wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.view,
-                        depth_ops: Some(
-                            wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(1.0),
-                                store: true,
-                            },
-                        ),
-                        stencil_ops: None,
-                    }
-                ),
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),
             });
             render.set_pipeline(&self.cube_pipeline.pipeline);
             render.set_bind_group(0, &self.atlas.bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.quad_buffer.buf.slice(..));
+            render.set_vertex_buffer(1, self.instance_buffer.buf.slice(..));
             render.set_index_buffer(
                 self.quad_index_buffer.buf.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
-
-            render.draw_indexed(0..self.quad_index_buffer.len() as u32, 0, 0..1)
+            render.draw_indexed(
+                0..self.quad_index_buffer.len() as u32,
+                0,
+                0..self.instance_buffer.len() as u32,
+            );
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);

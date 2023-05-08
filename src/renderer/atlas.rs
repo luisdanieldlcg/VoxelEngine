@@ -1,4 +1,3 @@
-
 use super::texture::Texture;
 
 pub struct Atlas {
