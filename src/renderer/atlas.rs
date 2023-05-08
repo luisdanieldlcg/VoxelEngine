@@ -58,15 +58,15 @@ impl Atlas {
 const ATLAS_SIZE: f32 = 256.0;
 const SUB_TEXTURE_SIZE: f32 = 16.0;
 
-pub fn atlas_uv_mapping(row: f32, col: f32, x: f32, y: f32) -> [f32; 2] {
-    let mut offset_x = row * SUB_TEXTURE_SIZE;
-    let mut offset_y = col * SUB_TEXTURE_SIZE;
+pub fn atlas_uv_mapping(texture_id: u8, x: u8, y: u8) -> [f32; 2] {
+    let mut offset_x = (texture_id % 16) as f32 * SUB_TEXTURE_SIZE;
+    let mut offset_y = (texture_id / 16) as f32 * SUB_TEXTURE_SIZE;
 
-    if x == 1.0 {
+    if x == 1 {
         offset_x += 16.0;
     }
 
-    if y == 1.0 {
+    if y == 1 {
         offset_y += 16.0;
     }
 

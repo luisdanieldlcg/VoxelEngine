@@ -150,7 +150,7 @@ impl Renderer {
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
         );
 
-        let cube = Mesh::cube();
+        let cube = Mesh::cube(0);
 
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
         let quad_index_buffer = create_quad_index_buffer(&device);

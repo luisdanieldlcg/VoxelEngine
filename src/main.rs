@@ -30,7 +30,7 @@ pub fn run() {
     let mut renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
     let mut last_render_time = Instant::now();
 
-    let mut locked_input = false; 
+    let mut locked_input = false;
 
     event_loop.run(move |generic_event, _, control_flow| {
         renderer.gui.platform.handle_event(&generic_event);
@@ -41,29 +41,29 @@ pub fn run() {
                 window_id,
             } if window_id == window.id() => {
                 match event {
-                    
                     WindowEvent::KeyboardInput { input, .. } => {
                         // update locked_input
-                        // but only if the key is pressed down 
+                        // but only if the key is pressed down
                         if input.state == ElementState::Pressed {
                             if input.virtual_keycode == Some(VirtualKeyCode::Escape) {
                                 locked_input = !locked_input;
-                                
 
-                                window.set_cursor_grab(if locked_input {
-                                    window.set_cursor_visible(true);
-                                    winit::window::CursorGrabMode::None
-                                } else {
-                                    window.set_cursor_visible(false);
-                                    winit::window::CursorGrabMode::Locked
-                                }).unwrap();
+                                window
+                                    .set_cursor_grab(if locked_input {
+                                        window.set_cursor_visible(true);
+                                        winit::window::CursorGrabMode::None
+                                    } else {
+                                        window.set_cursor_visible(false);
+                                        winit::window::CursorGrabMode::Locked
+                                    })
+                                    .unwrap();
                             }
                         }
                         if locked_input {
                             return;
                         }
                         renderer.on_key_pressed(input);
-                    },
+                    }
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::Resized(size) => {
                         renderer.resize(*size);

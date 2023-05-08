@@ -8,10 +8,10 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn new(v1: i8, v2: i8, v3: i8, uv: [f32; 2]) -> Self {
+    pub fn new(v1: i8, v2: i8, v3: i8, uv: [u8; 2], texture_id: u8) -> Self {
         Self {
             pos: [v1 as f32, v2 as f32, v3 as f32],
-            uv: atlas_uv_mapping(0.0, 0.0, uv[0], uv[1]),
+            uv: atlas_uv_mapping(texture_id, uv[0], uv[1]),
         }
     }
 }

@@ -46,7 +46,11 @@ impl<'frame> UIRenderer<'frame> {
         self.renderer.gui.platform.begin_frame();
         // Draw UI
 
-        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.camera, &mut self.renderer.camera_controller);
+        ui::draw_camera_settings(
+            &mut self.renderer.gui.platform,
+            &mut self.renderer.camera,
+            &mut self.renderer.camera_controller,
+        );
         let output = self.renderer.gui.platform.end_frame(None);
 
         let paint_jobs = self
