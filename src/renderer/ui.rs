@@ -5,7 +5,7 @@ use crate::{
     ui::{self, EguiInstance},
 };
 
-use super::camera::Camera;
+use super::camera::{Camera, CameraController};
 
 pub struct RendererBorrow<'a> {
     device: &'a wgpu::Device,
@@ -15,6 +15,7 @@ pub struct RendererBorrow<'a> {
     surface_config: &'a wgpu::SurfaceConfiguration,
     gui: &'a mut EguiInstance,
     camera: &'a mut Camera,
+    camera_controller: &'a mut CameraController,
 }
 
 pub struct UIRenderer<'frame> {
@@ -31,6 +32,7 @@ impl<'a> RendererBorrow<'a> {
             surface_config: &renderer.config,
             gui: &mut renderer.gui,
             camera: &mut renderer.camera,
+            camera_controller: &mut renderer.camera_controller,
         }
     }
 }
@@ -44,7 +46,7 @@ impl<'frame> UIRenderer<'frame> {
         self.renderer.gui.platform.begin_frame();
         // Draw UI
 
-        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.camera);
+        ui::draw_camera_settings(&mut self.renderer.gui.platform, &mut self.renderer.camera, &mut self.renderer.camera_controller);
         let output = self.renderer.gui.platform.end_frame(None);
 
         let paint_jobs = self

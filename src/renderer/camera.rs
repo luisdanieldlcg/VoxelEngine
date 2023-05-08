@@ -9,21 +9,19 @@ pub struct Camera {
     pitch: f32,
     yaw: f32,
     pub pos: Point3,
-    pub target: Vec3<f32>,
-    pub up: Vec3<f32>,
+    target: Vec3<f32>,
+    up: Vec3<f32>,
     pub fov_y_deg: f32,
     pub width: f32,
     pub height: f32,
     pub near_plane: f32,
     pub far_plane: f32,
-    last_x: f32,
-    last_y: f32,
 }
 
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(0.0, 0.0, 10.0),
+            pos: Vec3::new(0.0, 2.0, 10.0),
             target: Vec3::new(0.0, 0.0, -1.0),
             up: Vec3::unit_y(),
             fov_y_deg: 45.0,
@@ -31,10 +29,8 @@ impl Camera {
             height,
             near_plane: 0.1,
             far_plane: 100.0,
-            yaw: -90.0, // Point torwards -Z,
+            yaw: 90.0, // Point torwards -Z,
             pitch: 20.0,
-            last_x: width / 2.0,
-            last_y: height / 2.0,
         }
     }
 
@@ -47,6 +43,13 @@ impl Camera {
     pub fn rotate(&mut self, x: f32, y: f32) {
         self.yaw += x;
         self.pitch += y;
+
+        if self.pitch > 89.0 {
+            self.pitch = 89.0;
+        }
+        if self.pitch < -89.0 {
+            self.pitch = -89.0;
+        }
 
         let (yaw_sin, yaw_cos) = self.yaw.to_radians().sin_cos();
         let (pitch_sin, pitch_cos) = self.pitch.to_radians().sin_cos();
@@ -75,8 +78,8 @@ pub struct CameraController {
     amount_down: f32,
     mouse_dx: f32,
     mouse_dy: f32,
-    speed: f32,
-    sensitivity: f32,
+    pub speed: f32,
+    pub sensitivity: f32,
 }
 impl CameraController {
     pub fn new() -> Self {
@@ -89,12 +92,13 @@ impl CameraController {
             amount_down: 0.0,
             mouse_dx: 0.0,
             mouse_dy: 0.0,
-            speed: 4.0,
-            sensitivity: 0.1,
+            speed: 20.0,
+            // TODO: find out why sensitivity has to be so high
+            sensitivity: 70.0,
         }
     }
 
-    pub fn update(&mut self, camera: &mut Camera, dt: Duration, mouse_pos: (f32, f32)) {
+    pub fn update(&mut self, camera: &mut Camera, dt: Duration) {
         let dt = dt.as_secs_f32();
         let (yaw_sin, yaw_cos) = camera.yaw.to_radians().sin_cos();
         let forward = Vec3::new(yaw_cos, 0.0, yaw_sin);
@@ -111,14 +115,12 @@ impl CameraController {
         camera.translate(dy);
         camera.translate(dz);
 
-        let offset_x = (mouse_pos.0 - camera.last_x) * self.sensitivity;
-        let offset_y = (mouse_pos.1 - camera.last_y) * self.sensitivity;
-
-        camera.last_x = mouse_pos.0;
-        camera.last_y = mouse_pos.1;
-
-        // Rotate using the mouse
+        let offset_x = self.mouse_dx * self.sensitivity * dt;
+        let offset_y = self.mouse_dy * self.sensitivity * dt;
         camera.rotate(offset_x, -offset_y);
+
+        self.mouse_dx = 0.0;
+        self.mouse_dy = 0.0;
     }
 
     pub fn handle_keyboard_events(&mut self, input: &KeyboardInput) {

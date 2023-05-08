@@ -2,7 +2,7 @@ use egui::{DragValue, Grid};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
-use crate::renderer::camera::Camera;
+use crate::renderer::camera::{Camera, CameraController};
 
 pub struct EguiInstance {
     pub platform: Platform,
@@ -36,10 +36,22 @@ impl EguiInstance {
     }
 }
 
-pub fn draw_camera_settings(platform: &mut Platform, camera: &mut Camera) {
+pub fn draw_camera_settings(
+    platform: &mut Platform,
+    camera: &mut Camera,
+    controller: &mut CameraController,
+) {
     egui::Window::new("Camera Settings")
         .default_size([200.0, 200.0])
         .show(&platform.context(), |ui| {
+            ui.label("Speed");
+            ui.add(DragValue::new(&mut controller.speed));
+            ui.separator();
+
+            ui.label("Sensitivity");
+            ui.add(DragValue::new(&mut controller.sensitivity));
+            ui.separator();
+
             ui.label("Position [X Y Z]");
             Grid::new("camera_position").show(ui, |ui| {
                 ui.add(DragValue::new(&mut camera.pos.x));
@@ -48,32 +60,8 @@ pub fn draw_camera_settings(platform: &mut Platform, camera: &mut Camera) {
                 ui.end_row();
             });
             ui.separator();
-
-            ui.label("Target [X Y Z]");
-            Grid::new("camera_target").show(ui, |ui| {
-                ui.add(DragValue::new(&mut camera.target.x));
-                ui.add(DragValue::new(&mut camera.target.y));
-                ui.add(DragValue::new(&mut camera.target.z));
-                ui.end_row();
-            });
-            ui.separator();
-            ui.label("UP Vector [X Y Z]");
-            Grid::new("camera_up_vector").show(ui, |ui| {
-                ui.add(DragValue::new(&mut camera.up.x));
-                ui.add(DragValue::new(&mut camera.up.y));
-                ui.add(DragValue::new(&mut camera.up.z));
-                ui.end_row();
-            });
-            ui.separator();
             ui.label("Vertical FOV in degrees");
             ui.add(DragValue::new(&mut camera.fov_y_deg));
-            ui.separator();
-            ui.label("Aspect Ratio [W,H]");
-            Grid::new("aspect_ratio").show(ui, |ui| {
-                ui.add(DragValue::new(&mut camera.width));
-                ui.add(DragValue::new(&mut camera.height));
-                ui.end_row();
-            });
             ui.separator();
             ui.label("Near and Far Z-Planes [N,F]");
             Grid::new("z-planes").show(ui, |ui| {

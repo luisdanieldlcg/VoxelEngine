@@ -37,13 +37,12 @@ pub struct Renderer {
     camera_uniform: CameraUniform,
     transform_buffer: Buffer<CameraUniform>,
     transform_bind_group: wgpu::BindGroup,
-    camera_controller: camera::CameraController,
     egui_render_pass: egui_wgpu_backend::RenderPass,
     camera: camera::Camera,
-    pub gui: EguiInstance,
-    cursor_pos: (f32, f32),
     depth_texture: Texture,
     instance_buffer: Buffer<Instance>,
+    pub camera_controller: camera::CameraController,
+    pub gui: EguiInstance,
 }
 
 impl Renderer {
@@ -104,11 +103,11 @@ impl Renderer {
         surface.configure(&device, &config);
 
         let shader =
-            device.create_shader_module(wgpu::include_wgsl!("../assets/shaders/vertex.wgsl"));
+            device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
 
         let depth_texture: Texture = Texture::with_depth(&config, &device);
 
-        let texture_atlas = include_bytes!("../assets/atlas.png");
+        let texture_atlas = include_bytes!("../../assets/atlas.png");
         let atlas = Atlas::new(texture_atlas, &device, &queue);
 
         let camera = Camera::new(size.width as f32, size.height as f32);
@@ -186,7 +185,6 @@ impl Renderer {
             egui_render_pass,
             gui,
             camera,
-            cursor_pos: (0.0, 0.0),
             depth_texture,
             instance_buffer,
         }
@@ -209,16 +207,12 @@ impl Renderer {
         self.camera_controller.handle_keyboard_events(input);
     }
 
-    pub fn on_cursor_moved(&mut self, pos: (f32, f32)) {
-        self.cursor_pos = pos;
-    }
     pub fn on_mouse_motion(&mut self, delta: (f64, f64)) {
         self.camera_controller.handle_mouse_events(delta.0, delta.1);
     }
 
     pub fn update(&mut self, dt: Duration) {
-        self.camera_controller
-            .update(&mut self.camera, dt, self.cursor_pos);
+        self.camera_controller.update(&mut self.camera, dt);
         self.camera_uniform.update(&self.camera);
         self.queue.write_buffer(
             &self.transform_buffer.buf,
