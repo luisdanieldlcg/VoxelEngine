@@ -31,6 +31,7 @@ impl Mesh {
             Vertex::new(-1, 1, -1, [0, 0], left),
             Vertex::new(-1, 1, 1, [1, 0], left),
             Vertex::new(-1, -1, 1, [1, 1], left),
+            
         ));
         // right +x
         this.push_quad(Quad::new(

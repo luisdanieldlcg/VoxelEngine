@@ -99,9 +99,10 @@ pub fn run() {
                 state.renderer.on_mouse_motion(delta);
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
-                state.renderer.update(last_render_time.elapsed());
+                let dt = last_render_time.elapsed();
+                state.renderer.update(dt);
                 last_render_time = Instant::now();
-                match state.renderer.render(&window) {
+                match state.renderer.render(&window, dt.as_secs_f32()) {
                     Ok(_) => {}
                     Err(e) => eprintln!("{:?}", e),
                 }

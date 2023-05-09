@@ -165,7 +165,7 @@ impl Renderer {
         );
         let dirt = Block::new(BlockId::DIRT);
         let cube = Mesh::cube(dirt.id());
-
+        
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
         let quad_index_buffer = create_quad_index_buffer(&device);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
@@ -238,7 +238,7 @@ impl Renderer {
         );
     }
 
-    pub fn render(&mut self, window: &Window) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, window: &Window, dt: f32) -> Result<(), wgpu::SurfaceError> {
         let surface_texture: wgpu::SurfaceTexture = self.surface.get_current_texture()?;
 
         let view = surface_texture
@@ -295,7 +295,7 @@ impl Renderer {
                 0..self.instance_buffer.len() as u32,
             );
         }
-        let mut ui_renderer = UIRenderer::new(&mut encoder, self);
+        let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
 
         self.queue.submit(std::iter::once(encoder.finish()));

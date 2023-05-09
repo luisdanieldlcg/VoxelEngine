@@ -53,18 +53,19 @@ impl Camera {
 
         let (yaw_sin, yaw_cos) = self.yaw.to_radians().sin_cos();
         let (pitch_sin, pitch_cos) = self.pitch.to_radians().sin_cos();
-        let rotation = Vec3::new(yaw_cos * pitch_cos, pitch_sin, yaw_sin * pitch_cos).normalized();
+        // yaw_sin z goes negative for left handed coordinate system
+        let rotation = Vec3::new(yaw_cos * pitch_cos, pitch_sin, -yaw_sin * pitch_cos).normalized();
         self.target = rotation;
     }
 
     pub fn update_proj(&self) -> Mat4<f32> {
-        let proj = Mat4::perspective_rh_zo(
+        let proj = Mat4::perspective_lh_zo(
             self.fov_y_deg.to_radians(),
             self.width / self.height,
             self.near_plane,
             self.far_plane,
         );
-        let view = Mat4::look_at_rh(self.pos, self.pos + self.target, self.up);
+        let view = Mat4::look_at_lh(self.pos, self.pos + self.target, self.up);
         proj * view
     }
 }
@@ -80,7 +81,6 @@ pub struct CameraController {
     mouse_dy: f32,
     pub speed: f32,
     pub sensitivity: f32,
-    pub t: bool,
 }
 impl CameraController {
     pub fn new() -> Self {
@@ -96,26 +96,25 @@ impl CameraController {
             speed: 20.0,
             // TODO: find out why sensitivity has to be so high
             sensitivity: 70.0,
-            t: true,
         }
     }
 
     pub fn update(&mut self, camera: &mut Camera, dt: Duration) {
         let dt = dt.as_secs_f32();
         let (yaw_sin, yaw_cos) = camera.yaw.to_radians().sin_cos();
-        let forward = Vec3::new(yaw_cos, 0.0, yaw_sin);
-        let right = Vec3::new(-yaw_sin, 0.0, yaw_cos);
+        let forward = Vec3::new(yaw_cos, 0.0,- yaw_sin);
+        let right = Vec3::new(yaw_sin, 0.0, yaw_cos);
         let multiplier = self.speed * dt;
 
         // Translation in x y z
         let dx = forward * (self.amount_forward - self.amount_backward) * multiplier;
         let dy = Vec3::new(0.0, (self.amount_up - self.amount_down) * multiplier, 0.0);
-        let dz = right * (self.amount_right - self.amount_left) * multiplier;
+        let dz = right * (self.amount_left - self.amount_right) * multiplier;
 
         // Translate using WASD or arrow keys
         camera.translate(dx);
         camera.translate(dy);
-        camera.translate(dz);
+        camera.translate( dz);
 
         let offset_x = self.mouse_dx * self.sensitivity * dt;
         let offset_y = self.mouse_dy * self.sensitivity * dt;

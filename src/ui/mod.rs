@@ -3,7 +3,6 @@ use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
 use crate::{
-    global::GlobalState,
     renderer::camera::{Camera, CameraController},
 };
 
@@ -39,10 +38,11 @@ impl EguiInstance {
     }
 }
 
-pub fn draw_debugging_settings(platform: &mut Platform, wireframe: &mut bool) {
+pub fn draw_debugging_settings(platform: &mut Platform, dt: f32, wireframe: &mut bool) {
     egui::Window::new("Debug Settings")
         .default_size([200.0, 200.0])
         .show(&platform.context(), |ui| {
+            ui.label("[FPS]: ".to_owned() + &(1.0 / dt).to_string());
             ui.checkbox(wireframe, "Toggle Wireframe mode");
         });
 }

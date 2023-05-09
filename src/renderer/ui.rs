@@ -17,6 +17,7 @@ pub struct RendererBorrow<'a> {
     camera: &'a mut Camera,
     camera_controller: &'a mut CameraController,
     wireframe: &'a mut bool,
+    delta_time: f32,
 }
 
 pub struct UIRenderer<'frame> {
@@ -24,7 +25,7 @@ pub struct UIRenderer<'frame> {
 }
 
 impl<'a> RendererBorrow<'a> {
-    pub fn new(encoder: &'a mut wgpu::CommandEncoder, renderer: &'a mut Renderer) -> Self {
+    pub fn new(encoder: &'a mut wgpu::CommandEncoder, renderer: &'a mut Renderer, dt: f32) -> Self {
         Self {
             encoder,
             queue: &renderer.queue,
@@ -35,12 +36,13 @@ impl<'a> RendererBorrow<'a> {
             camera: &mut renderer.camera,
             camera_controller: &mut renderer.camera_controller,
             wireframe: &mut renderer.wireframe,
+            delta_time: dt,
         }
     }
 }
 impl<'frame> UIRenderer<'frame> {
-    pub fn new(enconder: &'frame mut CommandEncoder, renderer: &'frame mut Renderer) -> Self {
-        let renderer: RendererBorrow = RendererBorrow::new(enconder, renderer);
+    pub fn new(enconder: &'frame mut CommandEncoder, renderer: &'frame mut Renderer ,dt: f32) -> Self {
+        let renderer: RendererBorrow = RendererBorrow::new(enconder, renderer, dt);
         Self { renderer }
     }
 
@@ -55,6 +57,7 @@ impl<'frame> UIRenderer<'frame> {
         );
         ui::draw_debugging_settings(
             &mut self.renderer.gui.platform,
+            self.renderer.delta_time,
             &mut self.renderer.wireframe,
         );
         let output = self.renderer.gui.platform.end_frame(None);
