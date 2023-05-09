@@ -12,7 +12,6 @@ impl CubePipeline {
         bg_layouts: &[&wgpu::BindGroupLayout],
         polygon_mode: wgpu::PolygonMode,
     ) -> Self {
-       
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Cube pipeline layout"),
             // Determines the order of our bind groups
@@ -43,7 +42,7 @@ impl CubePipeline {
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Front),
                 unclipped_depth: false,
-                polygon_mode,   
+                polygon_mode,
                 conservative: false,
             },
             depth_stencil: Some(wgpu::DepthStencilState {

@@ -28,7 +28,7 @@ impl Camera {
             width,
             height,
             near_plane: 0.1,
-            far_plane: 100.0,
+            far_plane: 250.0,
             yaw: 90.0, // Point torwards -Z,
             pitch: 20.0,
         }

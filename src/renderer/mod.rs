@@ -9,7 +9,10 @@ mod ui;
 
 use std::time::Duration;
 
-use crate::ui::EguiInstance;
+use crate::{
+    block::{Block, BlockId},
+    ui::EguiInstance,
+};
 
 use self::{
     atlas::Atlas,
@@ -152,7 +155,7 @@ impl Renderer {
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Fill,
         );
-        
+
         let cube_wireframe_pipeline = CubePipeline::new(
             &device,
             &shader,
@@ -160,7 +163,8 @@ impl Renderer {
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Line,
         );
-        let cube = Mesh::cube(0);
+        let dirt = Block::new(BlockId::DIRT);
+        let cube = Mesh::cube(dirt.id());
 
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
         let quad_index_buffer = create_quad_index_buffer(&device);
@@ -176,6 +180,7 @@ impl Renderer {
                 });
             }
         }
+
         let instance_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &instances);
 
         Self {
@@ -292,7 +297,7 @@ impl Renderer {
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
-    
+
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
         Ok(())

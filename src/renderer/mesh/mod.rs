@@ -1,3 +1,5 @@
+use crate::block::BlockId;
+
 use self::vertex::Vertex;
 
 pub mod vertex;
@@ -15,54 +17,55 @@ impl Mesh {
         }
     }
 
-    pub fn cube(texture_id: u8) -> Mesh {
+    pub fn cube(block_id: &BlockId) -> Mesh {
         let mut this = Mesh::new();
-        // Originally: 
-        // [0,0]
-        // [0,1],
-        // [1,1],
-        // [1,0],
-        // left
-        this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [1, 1], texture_id),
-            Vertex::new(-1, 1, -1, [1, 0], texture_id),
-            Vertex::new(-1, 1, 1, [0, 0], texture_id),
-            Vertex::new(-1, -1, 1, [0, 1], texture_id),
+
+        let (top, bottom, left, right, front, back) = match block_id {
+            BlockId::AIR => todo!(),
+            BlockId::DIRT => (2, 0, 1, 1, 1, 1),
+        };
+
+        // left -x
+        this.push_quad(Quad::new( 
+            Vertex::new(-1, -1, -1, [0, 1], left),
+            Vertex::new(-1, 1, -1, [0, 0], left),
+            Vertex::new(-1, 1, 1, [1, 0], left),
+            Vertex::new(-1, -1, 1, [1, 1], left),
         ));
-        // right
+        // right +x
         this.push_quad(Quad::new(
-            Vertex::new(1, -1, 1, [1, 1], texture_id),
-            Vertex::new(1, 1, 1, [1, 0], texture_id),
-            Vertex::new(1, 1, -1, [0, 0], texture_id),
-            Vertex::new(1, -1, -1, [0, 1], texture_id),
+            Vertex::new(1, -1, 1, [0, 1], right),
+            Vertex::new(1, 1, 1, [0, 0], right),
+            Vertex::new(1, 1, -1, [1, 0], right),
+            Vertex::new(1, -1, -1, [1, 1], right),
         ));
-        // bottom
+        // bottom -y
         this.push_quad(Quad::new(
-            Vertex::new(1, -1, -1, [0, 0], texture_id),
-            Vertex::new(-1, -1, -1, [0, 1], texture_id),
-            Vertex::new(-1, -1, 1, [1, 1], texture_id),
-            Vertex::new(1, -1, 1, [1, 0], texture_id),
+            Vertex::new(1, -1, -1, [0, 1], bottom),
+            Vertex::new(-1, -1, -1, [0, 0], bottom),
+            Vertex::new(-1, -1, 1, [1, 0], bottom),
+            Vertex::new(1, -1, 1, [1, 1], bottom),
         ));
-        // top
+        // top +y
         this.push_quad(Quad::new(
-            Vertex::new(1, 1, 1, [0, 0], 1),
-            Vertex::new(-1, 1, 1, [0, 1], 1),
-            Vertex::new(-1, 1, -1, [1, 1], 1),
-            Vertex::new(1, 1, -1, [1, 0], 1),
+            Vertex::new(1, 1, 1, [0, 1], top),
+            Vertex::new(-1, 1, 1, [0, 0], top),
+            Vertex::new(-1, 1, -1, [1, 0], top),
+            Vertex::new(1, 1, -1, [1, 1], top),
         ));
-        // back
+        // back -z
         this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [0, 1], 0),
-            Vertex::new(1, -1, -1, [0, 0], 0),
-            Vertex::new(1, 1, -1, [1, 0], 0),
-            Vertex::new(-1, 1, -1, [1, 1], 0),
+            Vertex::new(-1, -1, -1, [0, 1], back),
+            Vertex::new(1, -1, -1, [1, 1], back),
+            Vertex::new(1, 1, -1, [1, 0], back),
+            Vertex::new(-1, 1, -1, [0, 0], back),
         ));
-        // front
+        // front +z
         this.push_quad(Quad::new(
-            Vertex::new(-1, 1, 1, [1, 1], 0),
-            Vertex::new(1, 1, 1, [0, 1], 0),
-            Vertex::new(1, -1, 1, [0, 0], 0),
-            Vertex::new(-1, -1, 1, [1, 0], 0),
+            Vertex::new(-1, 1, 1, [0, 0], front),
+            Vertex::new(1, 1, 1, [1, 0], front),
+            Vertex::new(1, -1, 1, [1, 1], front),
+            Vertex::new(-1, -1, 1, [0, 1], front),
         ));
 
         this

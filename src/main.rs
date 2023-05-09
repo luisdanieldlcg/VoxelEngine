@@ -8,6 +8,7 @@ use winit::{
     window::WindowBuilder,
 };
 
+pub mod block;
 pub mod global;
 pub mod renderer;
 pub mod ui;
@@ -62,6 +63,14 @@ pub fn run() {
                                     .unwrap();
                             }
                         }
+                        // wireframe mode on f12 pressed
+
+                        if input.state == ElementState::Pressed {
+                            if input.virtual_keycode == Some(VirtualKeyCode::F12) {
+                                state.renderer.wireframe = !state.renderer.wireframe;
+                            }
+                        }
+
                         if state.locked_input {
                             return;
                         }
