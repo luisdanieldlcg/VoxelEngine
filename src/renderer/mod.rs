@@ -43,6 +43,7 @@ pub struct Renderer {
     instance_buffer: Buffer<Instance>,
     pub camera_controller: camera::CameraController,
     pub gui: EguiInstance,
+    pub wireframe: bool,
 }
 
 impl Renderer {
@@ -69,7 +70,7 @@ impl Renderer {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
+                    features: wgpu::Features::POLYGON_MODE_LINE,
                     limits: wgpu::Limits::default(),
                     label: None,
                 },
@@ -187,6 +188,7 @@ impl Renderer {
             camera,
             depth_texture,
             instance_buffer,
+            wireframe: false,
         }
     }
 
@@ -276,7 +278,6 @@ impl Renderer {
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
-
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
         Ok(())

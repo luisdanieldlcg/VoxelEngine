@@ -16,6 +16,7 @@ pub struct RendererBorrow<'a> {
     gui: &'a mut EguiInstance,
     camera: &'a mut Camera,
     camera_controller: &'a mut CameraController,
+    wireframe: &'a mut bool,
 }
 
 pub struct UIRenderer<'frame> {
@@ -33,6 +34,7 @@ impl<'a> RendererBorrow<'a> {
             gui: &mut renderer.gui,
             camera: &mut renderer.camera,
             camera_controller: &mut renderer.camera_controller,
+            wireframe: &mut renderer.wireframe,
         }
     }
 }
@@ -51,6 +53,7 @@ impl<'frame> UIRenderer<'frame> {
             &mut self.renderer.camera,
             &mut self.renderer.camera_controller,
         );
+        ui::draw_debugging_settings(&mut self.renderer.gui.platform, &mut self.renderer.wireframe);
         let output = self.renderer.gui.platform.end_frame(None);
 
         let paint_jobs = self

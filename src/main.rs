@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use global::GlobalState;
 use ui::EguiInstance;
 use winit::{
     event::*,
@@ -7,6 +8,7 @@ use winit::{
     window::WindowBuilder,
 };
 
+pub mod global;
 pub mod renderer;
 pub mod ui;
 fn main() {
@@ -27,14 +29,14 @@ pub fn run() {
         .unwrap();
 
     let gui = EguiInstance::new(&window);
-    let mut renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
+    let renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
     let mut last_render_time = Instant::now();
 
-    let mut locked_input = false;
+    let mut state = GlobalState::new(renderer);
 
     event_loop.run(move |generic_event, _, control_flow| {
-        renderer.gui.platform.handle_event(&generic_event);
         *control_flow = ControlFlow::Poll;
+        state.renderer.gui.platform.handle_event(&generic_event);
         match generic_event {
             Event::WindowEvent {
                 ref event,
@@ -46,10 +48,10 @@ pub fn run() {
                         // but only if the key is pressed down
                         if input.state == ElementState::Pressed {
                             if input.virtual_keycode == Some(VirtualKeyCode::Escape) {
-                                locked_input = !locked_input;
+                                state.locked_input = !state.locked_input;
 
                                 window
-                                    .set_cursor_grab(if locked_input {
+                                    .set_cursor_grab(if state.locked_input {
                                         window.set_cursor_visible(true);
                                         winit::window::CursorGrabMode::None
                                     } else {
@@ -59,17 +61,17 @@ pub fn run() {
                                     .unwrap();
                             }
                         }
-                        if locked_input {
+                        if state.locked_input {
                             return;
                         }
-                        renderer.on_key_pressed(input);
+                        state.renderer.on_key_pressed(input);
                     }
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::Resized(size) => {
-                        renderer.resize(*size);
+                        state.renderer.resize(*size);
                     }
                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        renderer.resize(**new_inner_size);
+                        state.renderer.resize(**new_inner_size);
                     }
                     // WindowEvent::CursorMoved { position, .. } => {
                     //     renderer.on_cursor_moved((position.x as f32, position.y as f32));
@@ -81,15 +83,15 @@ pub fn run() {
                 event: winit::event::DeviceEvent::MouseMotion { delta },
                 ..
             } => {
-                if locked_input {
+                if state.locked_input {
                     return;
                 }
-                renderer.on_mouse_motion(delta);
+                state.renderer.on_mouse_motion(delta);
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
-                renderer.update(last_render_time.elapsed());
+                state.renderer.update(last_render_time.elapsed());
                 last_render_time = Instant::now();
-                match renderer.render(&window) {
+                match state.renderer.render(&window) {
                     Ok(_) => {}
                     Err(e) => eprintln!("{:?}", e),
                 }

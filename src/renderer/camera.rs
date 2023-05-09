@@ -80,6 +80,7 @@ pub struct CameraController {
     mouse_dy: f32,
     pub speed: f32,
     pub sensitivity: f32,
+    pub t: bool,
 }
 impl CameraController {
     pub fn new() -> Self {
@@ -95,6 +96,7 @@ impl CameraController {
             speed: 20.0,
             // TODO: find out why sensitivity has to be so high
             sensitivity: 70.0,
+            t: true,
         }
     }
 

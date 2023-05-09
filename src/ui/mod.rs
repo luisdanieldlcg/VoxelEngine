@@ -2,7 +2,10 @@ use egui::{DragValue, Grid};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
-use crate::renderer::camera::{Camera, CameraController};
+use crate::{
+    global::GlobalState,
+    renderer::camera::{Camera, CameraController},
+};
 
 pub struct EguiInstance {
     pub platform: Platform,
@@ -36,6 +39,19 @@ impl EguiInstance {
     }
 }
 
+pub fn draw_debugging_settings(platform: &mut Platform, wireframe: &mut bool) {
+    egui::Window::new("Debug Settings")
+        .default_size([200.0, 200.0])
+        .show(&platform.context(), |ui| {
+            let v = ui.toggle_value(  wireframe, "Toggle Wireframe mode");
+            if v.clicked() {
+                *wireframe = !*wireframe;
+                println!("clicked")
+            }
+            // ui.add(egui::widgets::Checkbox::new(wireframe, "Toggle"))
+        });
+}
+
 pub fn draw_camera_settings(
     platform: &mut Platform,
     camera: &mut Camera,
@@ -43,6 +59,8 @@ pub fn draw_camera_settings(
 ) {
     egui::Window::new("Camera Settings")
         .default_size([200.0, 200.0])
+        .collapsible(true)
+        .title_bar(true)
         .show(&platform.context(), |ui| {
             ui.label("Speed");
             ui.add(DragValue::new(&mut controller.speed));
