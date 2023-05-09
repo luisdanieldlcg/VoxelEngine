@@ -43,12 +43,7 @@ pub fn draw_debugging_settings(platform: &mut Platform, wireframe: &mut bool) {
     egui::Window::new("Debug Settings")
         .default_size([200.0, 200.0])
         .show(&platform.context(), |ui| {
-            let v = ui.toggle_value(  wireframe, "Toggle Wireframe mode");
-            if v.clicked() {
-                *wireframe = !*wireframe;
-                println!("clicked")
-            }
-            // ui.add(egui::widgets::Checkbox::new(wireframe, "Toggle"))
+            ui.checkbox(wireframe, "Toggle Wireframe mode");
         });
 }
 

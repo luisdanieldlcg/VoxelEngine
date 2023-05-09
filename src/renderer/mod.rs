@@ -30,6 +30,7 @@ pub struct Renderer {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     cube_pipeline: CubePipeline,
+    cube_wireframe_pipeline: CubePipeline,
     quad_buffer: Buffer<Vertex>,
     quad_index_buffer: Buffer<u16>,
     atlas: Atlas,
@@ -144,13 +145,21 @@ impl Renderer {
             }],
         });
 
-        let pipeline = CubePipeline::new(
+        let cube_pipeline = CubePipeline::new(
             &device,
             &shader,
             &config,
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
+            wgpu::PolygonMode::Fill,
         );
-
+        
+        let cube_wireframe_pipeline = CubePipeline::new(
+            &device,
+            &shader,
+            &config,
+            &[&atlas.bind_group_layout, &transform_bind_group_layout],
+            wgpu::PolygonMode::Line,
+        );
         let cube = Mesh::cube(0);
 
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
@@ -174,7 +183,8 @@ impl Renderer {
             device,
             queue,
             config,
-            cube_pipeline: pipeline,
+            cube_pipeline,
+            cube_wireframe_pipeline,
             quad_buffer,
             quad_index_buffer,
             atlas,
@@ -261,7 +271,11 @@ impl Renderer {
                     stencil_ops: None,
                 }),
             });
-            render.set_pipeline(&self.cube_pipeline.pipeline);
+            if self.wireframe {
+                render.set_pipeline(&self.cube_wireframe_pipeline.pipeline);
+            } else {
+                render.set_pipeline(&self.cube_pipeline.pipeline);
+            }
             render.set_bind_group(0, &self.atlas.bind_group, &[]);
             render.set_bind_group(1, &self.transform_bind_group, &[]);
             render.set_vertex_buffer(0, self.quad_buffer.buf.slice(..));
@@ -278,6 +292,7 @@ impl Renderer {
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self);
         ui_renderer.draw_egui(&surface_texture, window.scale_factor() as f32);
+    
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
         Ok(())

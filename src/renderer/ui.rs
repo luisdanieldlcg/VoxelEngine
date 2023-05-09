@@ -53,7 +53,10 @@ impl<'frame> UIRenderer<'frame> {
             &mut self.renderer.camera,
             &mut self.renderer.camera_controller,
         );
-        ui::draw_debugging_settings(&mut self.renderer.gui.platform, &mut self.renderer.wireframe);
+        ui::draw_debugging_settings(
+            &mut self.renderer.gui.platform,
+            &mut self.renderer.wireframe,
+        );
         let output = self.renderer.gui.platform.end_frame(None);
 
         let paint_jobs = self

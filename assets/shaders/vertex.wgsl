@@ -1,3 +1,5 @@
+// pos is a reserved keyword in Metal.
+
 struct Camera {
     transform: mat4x4<f32>,
 }
@@ -6,16 +8,16 @@ struct Camera {
 var<uniform> camera: Camera;
 
 struct CubeInstance {
-   @location(2) pos: vec3<f32>,
+   @location(2) translation: vec3<f32>,
 }
 
 struct VertexIn {
-    @location(0) pos: vec3<f32>,
+    @location(0) vertex_pos: vec3<f32>,
     @location(1) texture_pos: vec2<f32>,
 }
 
 struct VertexData {
-    @builtin(position) pos: vec4<f32>,
+    @builtin(position) vertex_pos: vec4<f32>,
     @location(0) texture_pos: vec2<f32>,
 }
 
@@ -25,9 +27,9 @@ fn vs_main(in: VertexIn, instance: CubeInstance) -> VertexData {
     data.texture_pos = in.texture_pos;
 
     var cube_instance: CubeInstance;
-    cube_instance.pos = instance.pos;
-    let pos = in.pos + cube_instance.pos;
-    data.pos = camera.transform * vec4<f32>(pos, 1.0);
+    cube_instance.translation = instance.translation;
+    let pos = in.vertex_pos + cube_instance.translation;
+    data.vertex_pos = camera.transform * vec4<f32>(pos, 1.0);
     return data;
 } 
 
