@@ -17,48 +17,52 @@ impl Mesh {
 
     pub fn cube(texture_id: u8) -> Mesh {
         let mut this = Mesh::new();
-
-        // -x
+        // Originally: 
+        // [0,0]
+        // [0,1],
+        // [1,1],
+        // [1,0],
+        // left
         this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [0, 0], texture_id),
-            Vertex::new(-1, 1, -1, [0, 1], texture_id),
-            Vertex::new(-1, 1, 1, [1, 1], texture_id),
-            Vertex::new(-1, -1, 1, [1, 0], texture_id),
+            Vertex::new(-1, -1, -1, [1, 1], texture_id),
+            Vertex::new(-1, 1, -1, [1, 0], texture_id),
+            Vertex::new(-1, 1, 1, [0, 0], texture_id),
+            Vertex::new(-1, -1, 1, [0, 1], texture_id),
         ));
-        // +x
+        // right
         this.push_quad(Quad::new(
-            Vertex::new(1, -1, 1, [0, 0], texture_id),
-            Vertex::new(1, 1, 1, [0, 1], texture_id),
-            Vertex::new(1, 1, -1, [1, 1], texture_id),
-            Vertex::new(1, -1, -1, [1, 0], texture_id),
+            Vertex::new(1, -1, 1, [1, 1], texture_id),
+            Vertex::new(1, 1, 1, [1, 0], texture_id),
+            Vertex::new(1, 1, -1, [0, 0], texture_id),
+            Vertex::new(1, -1, -1, [0, 1], texture_id),
         ));
-        // -y
+        // bottom
         this.push_quad(Quad::new(
             Vertex::new(1, -1, -1, [0, 0], texture_id),
             Vertex::new(-1, -1, -1, [0, 1], texture_id),
             Vertex::new(-1, -1, 1, [1, 1], texture_id),
             Vertex::new(1, -1, 1, [1, 0], texture_id),
         ));
-        // +y
+        // top
         this.push_quad(Quad::new(
-            Vertex::new(1, 1, 1, [0, 0], texture_id),
-            Vertex::new(-1, 1, 1, [0, 1], texture_id),
-            Vertex::new(-1, 1, -1, [1, 1], texture_id),
-            Vertex::new(1, 1, -1, [1, 0], texture_id),
+            Vertex::new(1, 1, 1, [0, 0], 1),
+            Vertex::new(-1, 1, 1, [0, 1], 1),
+            Vertex::new(-1, 1, -1, [1, 1], 1),
+            Vertex::new(1, 1, -1, [1, 0], 1),
         ));
-        // -z
+        // back
         this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [0, 0], texture_id),
-            Vertex::new(1, -1, -1, [0, 1], texture_id),
-            Vertex::new(1, 1, -1, [1, 1], texture_id),
-            Vertex::new(-1, 1, -1, [1, 0], texture_id),
+            Vertex::new(-1, -1, -1, [0, 1], 0),
+            Vertex::new(1, -1, -1, [0, 0], 0),
+            Vertex::new(1, 1, -1, [1, 0], 0),
+            Vertex::new(-1, 1, -1, [1, 1], 0),
         ));
-        // +z
+        // front
         this.push_quad(Quad::new(
-            Vertex::new(-1, 1, 1, [0, 0], texture_id),
-            Vertex::new(1, 1, 1, [0, 1], texture_id),
-            Vertex::new(1, -1, 1, [1, 1], texture_id),
-            Vertex::new(-1, -1, 1, [1, 0], texture_id),
+            Vertex::new(-1, 1, 1, [1, 1], 0),
+            Vertex::new(1, 1, 1, [0, 1], 0),
+            Vertex::new(1, -1, 1, [0, 0], 0),
+            Vertex::new(-1, -1, 1, [1, 0], 0),
         ));
 
         this
