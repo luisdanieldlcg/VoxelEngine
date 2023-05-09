@@ -41,7 +41,11 @@ impl<'a> RendererBorrow<'a> {
     }
 }
 impl<'frame> UIRenderer<'frame> {
-    pub fn new(enconder: &'frame mut CommandEncoder, renderer: &'frame mut Renderer ,dt: f32) -> Self {
+    pub fn new(
+        enconder: &'frame mut CommandEncoder,
+        renderer: &'frame mut Renderer,
+        dt: f32,
+    ) -> Self {
         let renderer: RendererBorrow = RendererBorrow::new(enconder, renderer, dt);
         Self { renderer }
     }

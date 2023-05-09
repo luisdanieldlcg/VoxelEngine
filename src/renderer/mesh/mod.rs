@@ -1,3 +1,5 @@
+use vek::Vec3;
+
 use crate::block::BlockId;
 
 use self::vertex::Vertex;
@@ -26,12 +28,11 @@ impl Mesh {
         };
 
         // left -x
-        this.push_quad(Quad::new( 
+        this.push_quad(Quad::new(
             Vertex::new(-1, -1, -1, [0, 1], left),
             Vertex::new(-1, 1, -1, [0, 0], left),
             Vertex::new(-1, 1, 1, [1, 0], left),
             Vertex::new(-1, -1, 1, [1, 1], left),
-            
         ));
         // right +x
         this.push_quad(Quad::new(
@@ -118,4 +119,10 @@ impl Triangle {
     pub fn new(v1: V, v2: V, v3: V) -> Self {
         Self { v1, v2, v3 }
     }
+}
+
+pub fn should_render_quad_at(block_pos: Vec3<u8>, dir: Vec3<u8>) {
+    // Determine if the quad should be rendered by checking neighboring blocks.
+
+    let neighbor_pos = block_pos + dir;
 }

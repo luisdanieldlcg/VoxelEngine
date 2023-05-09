@@ -9,6 +9,7 @@ use winit::{
 };
 
 pub mod block;
+pub mod chunk;
 pub mod global;
 pub mod renderer;
 pub mod ui;

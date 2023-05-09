@@ -1,3 +1,5 @@
+use vek::Vec3;
+
 #[derive(Debug)]
 pub enum Direction {
     TOP,
@@ -17,11 +19,15 @@ pub enum BlockId {
 #[derive(Debug)]
 pub struct Block {
     id: BlockId,
+    pos: Vec3<f32>,
 }
 
 impl Block {
-    pub fn new(id: BlockId) -> Self {
-        Self { id }
+    pub fn new(id: BlockId, pos: [f32; 3]) -> Self {
+        Self {
+            id,
+            pos: Vec3::from(pos),
+        }
     }
     pub fn id(&self) -> &BlockId {
         &self.id

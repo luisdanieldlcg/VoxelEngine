@@ -102,7 +102,7 @@ impl CameraController {
     pub fn update(&mut self, camera: &mut Camera, dt: Duration) {
         let dt = dt.as_secs_f32();
         let (yaw_sin, yaw_cos) = camera.yaw.to_radians().sin_cos();
-        let forward = Vec3::new(yaw_cos, 0.0,- yaw_sin);
+        let forward = Vec3::new(yaw_cos, 0.0, -yaw_sin);
         let right = Vec3::new(yaw_sin, 0.0, yaw_cos);
         let multiplier = self.speed * dt;
 
@@ -114,7 +114,7 @@ impl CameraController {
         // Translate using WASD or arrow keys
         camera.translate(dx);
         camera.translate(dy);
-        camera.translate( dz);
+        camera.translate(dz);
 
         let offset_x = self.mouse_dx * self.sensitivity * dt;
         let offset_y = self.mouse_dy * self.sensitivity * dt;

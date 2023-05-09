@@ -163,9 +163,9 @@ impl Renderer {
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Line,
         );
-        let dirt = Block::new(BlockId::DIRT);
+        let dirt = Block::new(BlockId::DIRT, [0.0, 0.0, 0.0]);
         let cube = Mesh::cube(dirt.id());
-        
+
         let quad_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
         let quad_index_buffer = create_quad_index_buffer(&device);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
