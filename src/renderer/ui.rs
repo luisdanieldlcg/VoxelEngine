@@ -1,11 +1,11 @@
+use vek::Vec3;
 use wgpu::{CommandEncoder, SurfaceTexture};
 
 use crate::{
     renderer::Renderer,
+    scene::camera::CameraController,
     ui::{self, EguiInstance},
 };
-
-use super::camera::{Camera, CameraController};
 
 pub struct RendererBorrow<'a> {
     device: &'a wgpu::Device,
@@ -14,10 +14,10 @@ pub struct RendererBorrow<'a> {
     egui_render_pass: &'a mut egui_wgpu_backend::RenderPass,
     surface_config: &'a wgpu::SurfaceConfiguration,
     gui: &'a mut EguiInstance,
-    camera: &'a mut Camera,
     camera_controller: &'a mut CameraController,
     wireframe: &'a mut bool,
     delta_time: f32,
+    pos: Vec3<f32>,
 }
 
 pub struct UIRenderer<'frame> {
@@ -25,7 +25,12 @@ pub struct UIRenderer<'frame> {
 }
 
 impl<'a> RendererBorrow<'a> {
-    pub fn new(encoder: &'a mut wgpu::CommandEncoder, renderer: &'a mut Renderer, dt: f32) -> Self {
+    pub fn new(
+        encoder: &'a mut wgpu::CommandEncoder,
+        renderer: &'a mut Renderer,
+        dt: f32,
+        pos: Vec3<f32>,
+    ) -> Self {
         Self {
             encoder,
             queue: &renderer.queue,
@@ -33,10 +38,10 @@ impl<'a> RendererBorrow<'a> {
             egui_render_pass: &mut renderer.egui_render_pass,
             surface_config: &renderer.config,
             gui: &mut renderer.gui,
-            camera: &mut renderer.camera,
-            camera_controller: &mut renderer.camera_controller,
-            wireframe: &mut renderer.wireframe,
+            camera_controller: &mut renderer.scene.camera_controller,
+            wireframe: &mut renderer.world_renderer.wireframe,
             delta_time: dt,
+            pos,
         }
     }
 }
@@ -45,8 +50,9 @@ impl<'frame> UIRenderer<'frame> {
         enconder: &'frame mut CommandEncoder,
         renderer: &'frame mut Renderer,
         dt: f32,
+        pos: Vec3<f32>,
     ) -> Self {
-        let renderer: RendererBorrow = RendererBorrow::new(enconder, renderer, dt);
+        let renderer: RendererBorrow = RendererBorrow::new(enconder, renderer, dt, pos);
         Self { renderer }
     }
 
@@ -56,8 +62,8 @@ impl<'frame> UIRenderer<'frame> {
 
         ui::draw_camera_settings(
             &mut self.renderer.gui.platform,
-            &mut self.renderer.camera,
             &mut self.renderer.camera_controller,
+            self.renderer.pos,
         );
         ui::draw_debugging_settings(
             &mut self.renderer.gui.platform,

@@ -12,8 +12,8 @@ pub struct Camera {
     target: Vec3<f32>,
     up: Vec3<f32>,
     pub fov_y_deg: f32,
-    pub width: f32,
-    pub height: f32,
+    width: f32,
+    height: f32,
     pub near_plane: f32,
     pub far_plane: f32,
 }
@@ -56,6 +56,11 @@ impl Camera {
         // yaw_sin z goes negative for left handed coordinate system
         let rotation = Vec3::new(yaw_cos * pitch_cos, pitch_sin, -yaw_sin * pitch_cos).normalized();
         self.target = rotation;
+    }
+
+    pub fn on_resize(&mut self, new_width: f32, new_height: f32) {
+        self.width = new_width;
+        self.height = new_height;
     }
 
     pub fn update_proj(&self) -> Mat4<f32> {

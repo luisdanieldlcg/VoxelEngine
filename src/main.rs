@@ -12,6 +12,7 @@ pub mod block;
 pub mod chunk;
 pub mod global;
 pub mod renderer;
+pub mod scene;
 pub mod ui;
 
 fn main() {
@@ -40,6 +41,9 @@ pub fn run() {
     event_loop.run(move |generic_event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
         state.renderer.gui.platform.handle_event(&generic_event);
+        if !state.locked_input {
+            state.renderer.input(&generic_event);
+        }
         match generic_event {
             Event::WindowEvent {
                 ref event,
@@ -64,18 +68,11 @@ pub fn run() {
                                     .unwrap();
                             }
                         }
-                        // wireframe mode on f12 pressed
-
                         if input.state == ElementState::Pressed {
                             if input.virtual_keycode == Some(VirtualKeyCode::F12) {
                                 state.renderer.wireframe = !state.renderer.wireframe;
                             }
                         }
-
-                        if state.locked_input {
-                            return;
-                        }
-                        state.renderer.on_key_pressed(input);
                     }
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     WindowEvent::Resized(size) => {
@@ -84,20 +81,8 @@ pub fn run() {
                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         state.renderer.resize(**new_inner_size);
                     }
-                    // WindowEvent::CursorMoved { position, .. } => {
-                    //     renderer.on_cursor_moved((position.x as f32, position.y as f32));
-                    // }
                     _ => {}
                 };
-            }
-            Event::DeviceEvent {
-                event: winit::event::DeviceEvent::MouseMotion { delta },
-                ..
-            } => {
-                if state.locked_input {
-                    return;
-                }
-                state.renderer.on_mouse_motion(delta);
             }
             Event::RedrawRequested(window_id) if window_id == window.id() => {
                 let dt = last_render_time.elapsed();

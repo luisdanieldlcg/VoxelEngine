@@ -8,19 +8,20 @@ pub mod vertex;
 
 type V = Vertex;
 
+#[derive(Debug)]
 pub struct Mesh {
     vertices: Vec<Vertex>,
 }
 
 impl Mesh {
-    pub fn new() -> Self {
+    pub fn new(vertices: &[V]) -> Self {
         Self {
-            vertices: Vec::new(),
+            vertices: Vec::from(vertices),
         }
     }
 
     pub fn cube(block_id: &BlockId) -> Mesh {
-        let mut this = Mesh::new();
+        let mut this = Mesh::new(&[]);
 
         let (top, bottom, left, right, front, back) = match block_id {
             BlockId::AIR => todo!(),

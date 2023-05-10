@@ -2,7 +2,7 @@ use egui::{DragValue, Grid};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
-use crate::renderer::camera::{Camera, CameraController};
+use crate::scene::camera::{Camera, CameraController};
 
 pub struct EguiInstance {
     pub platform: Platform,
@@ -47,8 +47,8 @@ pub fn draw_debugging_settings(platform: &mut Platform, dt: f32, wireframe: &mut
 
 pub fn draw_camera_settings(
     platform: &mut Platform,
-    camera: &mut Camera,
     controller: &mut CameraController,
+    pos: Vec3<f32>,
 ) {
     egui::Window::new("Camera Settings")
         .default_size([200.0, 200.0])
@@ -64,21 +64,6 @@ pub fn draw_camera_settings(
             ui.separator();
 
             ui.label("Position [X Y Z]");
-            Grid::new("camera_position").show(ui, |ui| {
-                ui.add(DragValue::new(&mut camera.pos.x));
-                ui.add(DragValue::new(&mut camera.pos.y));
-                ui.add(DragValue::new(&mut camera.pos.z));
-                ui.end_row();
-            });
-            ui.separator();
-            ui.label("Vertical FOV in degrees");
-            ui.add(DragValue::new(&mut camera.fov_y_deg));
-            ui.separator();
-            ui.label("Near and Far Z-Planes [N,F]");
-            Grid::new("z-planes").show(ui, |ui| {
-                ui.add(DragValue::new(&mut camera.near_plane));
-                ui.add(DragValue::new(&mut camera.far_plane));
-                ui.end_row();
-            });
+            ui.label(format!("[{:.2} {:.2} {:.2}]", pos.x, pos.y, pos.z,));
         });
 }
