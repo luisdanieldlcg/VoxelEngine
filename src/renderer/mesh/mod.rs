@@ -1,4 +1,3 @@
-use vek::Vec3;
 
 use crate::block::BlockId;
 
@@ -77,19 +76,19 @@ impl Mesh {
     pub fn push_quad(&mut self, quad: Quad) {
         if V::INDEX_BUFFER_FORMAT.is_some() {
             self.vertices.push(quad.v2);
-            self.vertices.push(quad.v3);
             self.vertices.push(quad.v1);
+            self.vertices.push(quad.v3);
             self.vertices.push(quad.v4);
             return;
         }
         // One half
-        self.vertices.push(quad.v1);
+        self.vertices.push(quad.v3);
         self.vertices.push(quad.v2);
         self.vertices.push(quad.v3);
         // Another half
         self.vertices.push(quad.v3);
         self.vertices.push(quad.v4);
-        self.vertices.push(quad.v1);
+        self.vertices.push(quad.v3);
     }
 
     pub fn vertices(&self) -> &[V] {
@@ -105,25 +104,7 @@ pub struct Quad {
 }
 
 impl Quad {
-    pub fn new(v1: V, v2: V, v3: V, v4: V) -> Self {
+    pub fn new(v3: V, v2: V, v1: V, v4: V) -> Self {
         Self { v1, v2, v3, v4 }
     }
-}
-
-/// Represents the vertices of a triangle.
-pub struct Triangle {
-    v1: V,
-    v2: V,
-    v3: V,
-}
-impl Triangle {
-    pub fn new(v1: V, v2: V, v3: V) -> Self {
-        Self { v1, v2, v3 }
-    }
-}
-
-pub fn should_render_quad_at(block_pos: Vec3<u8>, dir: Vec3<u8>) {
-    // Determine if the quad should be rendered by checking neighboring blocks.
-
-    let neighbor_pos = block_pos + dir;
 }

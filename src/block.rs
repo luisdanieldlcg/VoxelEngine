@@ -32,4 +32,7 @@ impl Block {
     pub fn id(&self) -> &BlockId {
         &self.id
     }
+    pub fn pos(&self) -> &Vec3<f32> {
+        &self.pos
+    }
 }

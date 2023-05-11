@@ -1,7 +1,6 @@
 pub mod atlas;
 pub mod buffer;
 mod cube;
-pub mod instance;
 pub mod mesh;
 mod texture;
 mod ui;
