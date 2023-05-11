@@ -27,47 +27,51 @@ impl Mesh {
             BlockId::DIRT => (2, 0, 1, 1, 1, 1),
         };
 
+        // Block size = 1
+        const NEGATIVE_X: f32 = -0.5;
+        const POSITIVE_X: f32 = 0.5;
+        
         // left -x
         this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [0, 1], left),
-            Vertex::new(-1, 1, -1, [0, 0], left),
-            Vertex::new(-1, 1, 1, [1, 0], left),
-            Vertex::new(-1, -1, 1, [1, 1], left),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], left),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [0, 0], left),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [1, 0], left),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], left),
         ));
         // right +x
         this.push_quad(Quad::new(
-            Vertex::new(1, -1, 1, [0, 1], right),
-            Vertex::new(1, 1, 1, [0, 0], right),
-            Vertex::new(1, 1, -1, [1, 0], right),
-            Vertex::new(1, -1, -1, [1, 1], right),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [0, 1], right),
+            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], right),
+            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], right),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [1, 1], right),
         ));
         // bottom -y
         this.push_quad(Quad::new(
-            Vertex::new(1, -1, -1, [0, 1], bottom),
-            Vertex::new(-1, -1, -1, [0, 0], bottom),
-            Vertex::new(-1, -1, 1, [1, 0], bottom),
-            Vertex::new(1, -1, 1, [1, 1], bottom),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], bottom),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 0], bottom),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [1, 0], bottom),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], bottom),
         ));
         // top +y
         this.push_quad(Quad::new(
-            Vertex::new(1, 1, 1, [0, 1], top),
-            Vertex::new(-1, 1, 1, [0, 0], top),
-            Vertex::new(-1, 1, -1, [1, 0], top),
-            Vertex::new(1, 1, -1, [1, 1], top),
+            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [0, 1], top),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], top),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], top),
+            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 1], top),
         ));
         // back -z
         this.push_quad(Quad::new(
-            Vertex::new(-1, -1, -1, [0, 1], back),
-            Vertex::new(1, -1, -1, [1, 1], back),
-            Vertex::new(1, 1, -1, [1, 0], back),
-            Vertex::new(-1, 1, -1, [0, 0], back),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], back),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [1, 1], back),
+            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], back),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [0, 0], back),
         ));
         // front +z
         this.push_quad(Quad::new(
-            Vertex::new(-1, 1, 1, [0, 0], front),
-            Vertex::new(1, 1, 1, [1, 0], front),
-            Vertex::new(1, -1, 1, [1, 1], front),
-            Vertex::new(-1, -1, 1, [0, 1], front),
+            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], front),
+            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [1, 0], front),
+            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], front),
+            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [0, 1], front),
         ));
 
         this

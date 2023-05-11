@@ -30,7 +30,7 @@ pub fn run() {
 
     window
         .set_cursor_grab(winit::window::CursorGrabMode::Locked)
-        .unwrap();
+        .unwrap_or(()); // do not crash
 
     let gui = EguiInstance::new(&window);
     let renderer = pollster::block_on(renderer::Renderer::new(&window, gui));
@@ -65,7 +65,7 @@ pub fn run() {
                                         window.set_cursor_visible(false);
                                         winit::window::CursorGrabMode::Locked
                                     })
-                                    .unwrap();
+                                    .unwrap_or(());
                             }
                         }
                         if input.state == ElementState::Pressed {

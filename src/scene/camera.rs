@@ -62,7 +62,7 @@ impl Camera {
     }
 
     pub fn update_proj(&self) -> Mat4<f32> {
-        let proj = Mat4::perspective_fov_lh_no(
+        let proj = Mat4::perspective_fov_lh_zo(
             self.fov_y_deg.to_radians(),
             self.width,
             self.height,
@@ -71,7 +71,7 @@ impl Camera {
         );
         let model = Mat4::translation_3d(Vec3::new(10.0, 0.0 ,0.0));
         let view = Mat4::look_at_lh(self.pos, self.target + self.pos, Vec3::unit_y());
-        proj * view * model * Mat4::scaling_3d(0.5)
+        proj * view * model
     }
 }
 
