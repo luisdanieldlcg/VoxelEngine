@@ -70,7 +70,8 @@ pub fn run() {
                         }
                         if input.state == ElementState::Pressed {
                             if input.virtual_keycode == Some(VirtualKeyCode::F12) {
-                                state.renderer.wireframe = !state.renderer.wireframe;
+                                state.renderer.world_renderer.wireframe =
+                                    !state.renderer.world_renderer.wireframe;
                             }
                         }
                     }

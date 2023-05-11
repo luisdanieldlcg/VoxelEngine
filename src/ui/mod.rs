@@ -2,7 +2,7 @@ use egui::{DragValue, Grid};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
-use crate::scene::camera::{CameraController};
+use crate::scene::camera::CameraController;
 
 pub struct EguiInstance {
     pub platform: Platform,

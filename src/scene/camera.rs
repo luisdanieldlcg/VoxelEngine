@@ -69,7 +69,7 @@ impl Camera {
             self.near_plane,
             self.far_plane,
         );
-        let model = Mat4::translation_3d(Vec3::new(10.0, 0.0 ,0.0));
+        let model = Mat4::translation_3d(Vec3::new(10.0, 0.0, 0.0));
         let view = Mat4::look_at_lh(self.pos, self.target + self.pos, Vec3::unit_y());
         proj * view * model
     }

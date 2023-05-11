@@ -1,3 +1,4 @@
+use vek::Vec3;
 
 use crate::block::BlockId;
 
@@ -19,7 +20,11 @@ impl Mesh {
         }
     }
 
-    pub fn cube(block_id: &BlockId) -> Mesh {
+    pub fn cube(block_id: &BlockId) -> Self {
+        Self::cube_offset(block_id, Vec3::zero())
+    }
+
+    pub fn cube_offset(block_id: &BlockId, offset: Vec3<f32>) -> Mesh {
         let mut this = Mesh::new(&[]);
 
         let (top, bottom, left, right, front, back) = match block_id {
@@ -28,50 +33,55 @@ impl Mesh {
         };
 
         // Block size = 1
-        const NEGATIVE_X: f32 = -0.5;
-        const POSITIVE_X: f32 = 0.5;
+        let neg_x: f32 = -0.5 - offset.x;
+        let pos_x: f32 = 0.5 + offset.x;
+        let neg_y: f32 = -0.5 - offset.y;
+        let pos_y: f32 = 0.5 + offset.y;
+        let neg_z: f32 = -0.5 - offset.z;
+        let pos_z: f32 = 0.5 + offset.z;
         
+        // Top
         // left -x
         this.push_quad(Quad::new(
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], left),
-            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [0, 0], left),
-            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [1, 0], left),
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], left),
+            Vertex::new(neg_x, neg_y, neg_z, [0, 1], left),
+            Vertex::new(neg_x, pos_y, neg_z, [0, 0], left),
+            Vertex::new(neg_x, pos_y, pos_z, [1, 0], left),
+            Vertex::new(neg_x, neg_y, pos_z, [1, 1], left),
         ));
         // right +x
         this.push_quad(Quad::new(
-            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [0, 1], right),
-            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], right),
-            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], right),
-            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [1, 1], right),
+            Vertex::new(pos_x, neg_y, pos_z, [0, 1], right),
+            Vertex::new(pos_x, pos_y, pos_z, [0, 0], right),
+            Vertex::new(pos_x, pos_y, neg_z, [1, 0], right),
+            Vertex::new(pos_x, neg_y, neg_z, [1, 1], right),
         ));
         // bottom -y
         this.push_quad(Quad::new(
-            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], bottom),
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 0], bottom),
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [1, 0], bottom),
-            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], bottom),
+            Vertex::new(pos_x, neg_y, neg_z, [0, 1], bottom),
+            Vertex::new(neg_x, neg_y, neg_z, [0, 0], bottom),
+            Vertex::new(neg_x, neg_y, pos_z, [1, 0], bottom),
+            Vertex::new(pos_x, neg_y, pos_z, [1, 1], bottom),
         ));
         // top +y
         this.push_quad(Quad::new(
-            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [0, 1], top),
-            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], top),
-            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], top),
-            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 1], top),
+            Vertex::new(pos_x, pos_y, pos_z, [0, 1], top),
+            Vertex::new(neg_x, pos_y, pos_z, [0, 0], top),
+            Vertex::new(neg_x, pos_y, neg_z, [1, 0], top),
+            Vertex::new(pos_x, pos_y, neg_z, [1, 1], top),
         ));
         // back -z
         this.push_quad(Quad::new(
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, NEGATIVE_X, [0, 1], back),
-            Vertex::new(POSITIVE_X, NEGATIVE_X, NEGATIVE_X, [1, 1], back),
-            Vertex::new(POSITIVE_X, POSITIVE_X, NEGATIVE_X, [1, 0], back),
-            Vertex::new(NEGATIVE_X, POSITIVE_X, NEGATIVE_X, [0, 0], back),
+            Vertex::new(neg_x, neg_y, neg_z, [0, 1], back),
+            Vertex::new(pos_x, neg_y, neg_z, [1, 1], back),
+            Vertex::new(pos_x, pos_y, neg_z, [1, 0], back),
+            Vertex::new(neg_x, pos_y, neg_z, [0, 0], back),
         ));
         // front +z
         this.push_quad(Quad::new(
-            Vertex::new(NEGATIVE_X, POSITIVE_X, POSITIVE_X, [0, 0], front),
-            Vertex::new(POSITIVE_X, POSITIVE_X, POSITIVE_X, [1, 0], front),
-            Vertex::new(POSITIVE_X, NEGATIVE_X, POSITIVE_X, [1, 1], front),
-            Vertex::new(NEGATIVE_X, NEGATIVE_X, POSITIVE_X, [0, 1], front),
+            Vertex::new(neg_x, pos_y, pos_z, [0, 0], front),
+            Vertex::new(pos_x, pos_y, pos_z, [1, 0], front),
+            Vertex::new(pos_x, neg_y, pos_z, [1, 1], front),
+            Vertex::new(neg_x, neg_y, pos_z, [0, 1], front),
         ));
 
         this

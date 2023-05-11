@@ -20,13 +20,12 @@ pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    world_renderer: WorldRenderer,
     scene: Scene,
     size: winit::dpi::PhysicalSize<u32>,
     egui_render_pass: egui_wgpu_backend::RenderPass,
     depth_texture: Texture,
+    pub world_renderer: WorldRenderer,
     pub gui: EguiInstance,
-    pub wireframe: bool,
 }
 
 impl Renderer {
@@ -130,7 +129,6 @@ impl Renderer {
             egui_render_pass,
             gui,
             depth_texture,
-            wireframe: false,
             world_renderer,
             scene,
         }
