@@ -1,6 +1,6 @@
 use vek::Vec3;
 
-use crate::renderer::mesh::{vertex::Vertex, Mesh};
+use crate::renderer::mesh::{quad::Quad, vertex::Vertex};
 
 #[derive(Debug)]
 pub enum Direction {
@@ -20,18 +20,22 @@ pub enum BlockId {
 
 #[derive(Debug)]
 pub struct Block {
-    id: BlockId,
-    pos: Vec3<f32>,
-    mesh: Mesh,
+    pub id: BlockId,
+    pub pos: Vec3<f32>,
+    pub quads: [Quad; 6],
 }
 
 impl Block {
-    pub fn new(id: BlockId, pos: [f32; 3]) -> Self {
-        Self {
-            mesh: Mesh::cube(&id),
-            pos: Vec3::from(pos),
-            id,
+    pub fn new(id: BlockId, pos: Vec3<f32>) -> Self {
+        let quads = Quad::create_block_quads(&id, pos);
+        Self { id, pos, quads }
+    }
+    pub fn vertices(&self) -> Vec<Vertex> {
+        let mut vertices = Vec::new();
+        for quad in self.quads.iter() {
+            vertices.extend_from_slice(&quad.vertices);
         }
+        vertices
     }
 
     pub fn id(&self) -> &BlockId {
@@ -40,8 +44,8 @@ impl Block {
     pub fn pos(&self) -> &Vec3<f32> {
         &self.pos
     }
-    pub fn vertices(&self) -> &[Vertex] {
-        self.mesh.vertices()
-    }
 
+    pub fn update(&mut self, offset: Vec3<f32>) {
+        self.quads = Quad::create_block_quads(&self.id, offset);
+    }
 }

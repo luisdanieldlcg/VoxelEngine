@@ -1,22 +1,14 @@
 use crate::{
-    block::{Block, BlockId},
-    chunk::Chunk,
+    block::Block,
+    chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE},
 };
 
-use super::{
-    atlas::Atlas,
-    buffer::{create_cube_index_buffer, Buffer},
-    cube::CubePipeline,
-    mesh::{vertex::Vertex, Mesh},
-    IRenderer,
-};
+use super::{atlas::Atlas, cube::CubePipeline, mesh::vertex::Vertex, IRenderer};
 
 pub struct WorldRenderer {
     chunk: Chunk,
     pipeline: CubePipeline,
     pipeline_wireframe: CubePipeline,
-    cube_buffer: Buffer<Vertex>,
-    cube_index_buffer: Buffer<u16>,
     pub atlas: Atlas,
     pub wireframe: bool,
 }
@@ -29,12 +21,12 @@ impl IRenderer for WorldRenderer {
             render_pass.set_pipeline(&self.pipeline.pipeline);
         }
         render_pass.set_bind_group(0, &self.atlas.bind_group, &[]);
-        render_pass.set_vertex_buffer(0, self.chunk.buffer.vertex().buf.slice(..));
+        render_pass.set_vertex_buffer(0, self.chunk.buffer.vertex_buf.buf.slice(..));
         render_pass.set_index_buffer(
-            self.chunk.buffer.index().buf.slice(..),
+            self.chunk.buffer.index_buf.buf.slice(..),
             wgpu::IndexFormat::Uint16,
         );
-        render_pass.draw_indexed(0..self.chunk.buffer.index().len() as u32, 0, 0..1 as u32);
+        render_pass.draw_indexed(0..self.chunk.buffer.indices_len, 0, 0..1);
     }
 }
 
@@ -64,20 +56,27 @@ impl WorldRenderer {
             wgpu::PolygonMode::Line,
         );
         let chunk = Chunk::new(&device);
-        let dirt = Block::new(BlockId::DIRT, [0.0, 0.0, 0.0]);
-        let cube = Mesh::cube(dirt.id());
-
-        let cube_buffer = Buffer::new(&device, wgpu::BufferUsages::VERTEX, &cube.vertices());
-        let cube_index_buffer = create_cube_index_buffer(&device);
-      
-        Self {
+        let mut world = Self {
             chunk,
             pipeline: cube_pipeline,
             pipeline_wireframe: cube_wireframe_pipeline,
             atlas,
             wireframe: false,
-            cube_index_buffer,
-            cube_buffer,
-        }
+        };
+        Self::load_chunk(&mut world, queue);
+        world
+    }
+
+    fn load_chunk(&mut self, queue: &wgpu::Queue) {
+        // update blocks
+        // for block in &mut self.chunk.blocks {
+        //     for x in 0..CHUNK_X_SIZE {
+
+        //     }
+        // }
+
+        self.chunk
+            .buffer
+            .update(queue, &self.chunk.mesh.vertices, &self.chunk.mesh.indices);
     }
 }

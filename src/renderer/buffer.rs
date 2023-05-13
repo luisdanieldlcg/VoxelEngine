@@ -4,30 +4,34 @@ use wgpu::util::DeviceExt;
 use super::mesh::vertex::Vertex;
 
 pub struct ChunkBuffer {
-    vertex_buf: Buffer<Vertex>,
-    index_buf: Buffer<u16>,
-    indices_len: u32,
+    pub vertex_buf: Buffer<Vertex>,
+    pub index_buf: Buffer<u16>,
+    pub indices_len: u32,
 }
 
 impl ChunkBuffer {
-    pub fn new(device: &wgpu::Device, vertices: Vec<Vertex>, indices: Vec<u16>) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        vertices: Vec<Vertex>,
+        indices: Vec<u16>,
+        num_elements: u32,
+    ) -> Self {
         Self {
-            vertex_buf: Buffer::new(device, wgpu::BufferUsages::VERTEX, &vertices),
-            index_buf: Buffer::new(device, wgpu::BufferUsages::INDEX, &indices),
-            indices_len: indices.len() as u32,
+            vertex_buf: Buffer::new(
+                device,
+                wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                &vertices,
+            ),
+            index_buf: Buffer::new(
+                device,
+                wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                &indices,
+            ),
+            indices_len: num_elements,
         }
     }
-    pub fn vertex(&self) -> &Buffer<Vertex> {
-        &self.vertex_buf
-    }
-    pub fn index(&self) -> &Buffer<u16> {
-        &self.index_buf
-    }
-    pub fn indices(&self) -> u32 {
-        self.indices_len
-    }
     pub fn update(&mut self, queue: &wgpu::Queue, v_buf: &[Vertex], i_buf: &[u16]) {
-        self.vertex_buf.update(&queue,&v_buf, 0);
+        self.vertex_buf.update(&queue, &v_buf, 0);
         self.index_buf.update(&queue, &i_buf, 0);
         self.indices_len = i_buf.len() as u32;
     }
@@ -66,7 +70,7 @@ impl<T: Copy + Pod> Buffer<T> {
     }
 }
 pub fn compute_cube_indices(vertices: usize) -> Vec<u16> {
-    let indices = [0, 1, 2, 2, 1, 3]
+    let indices = [0, 1, 2, 2, 3, 0]
         .iter()
         .cycle()
         .copied()

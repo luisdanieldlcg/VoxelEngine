@@ -13,7 +13,7 @@ struct Camera {
     transform: mat4x4<f32>,
 }
 
-@group(1) @binding(0) 
+@group(1) @binding(0)
 var<uniform> camera: Camera;
 
 @vertex
