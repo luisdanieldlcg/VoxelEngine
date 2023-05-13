@@ -5,7 +5,7 @@ use super::mesh::vertex::Vertex;
 
 pub struct ChunkBuffer {
     pub vertex_buf: Buffer<Vertex>,
-    pub index_buf: Buffer<u16>,
+    pub index_buf: Buffer<u32>,
     pub indices_len: u32,
 }
 
@@ -13,7 +13,7 @@ impl ChunkBuffer {
     pub fn new(
         device: &wgpu::Device,
         vertices: Vec<Vertex>,
-        indices: Vec<u16>,
+        indices: Vec<u32>,
         num_elements: u32,
     ) -> Self {
         Self {
@@ -29,11 +29,6 @@ impl ChunkBuffer {
             ),
             indices_len: num_elements,
         }
-    }
-    pub fn update(&mut self, queue: &wgpu::Queue, v_buf: &[Vertex], i_buf: &[u16]) {
-        self.vertex_buf.update(&queue, &v_buf, 0);
-        self.index_buf.update(&queue, &i_buf, 0);
-        self.indices_len = i_buf.len() as u32;
     }
 }
 
@@ -69,18 +64,18 @@ impl<T: Copy + Pod> Buffer<T> {
         self.len
     }
 }
-pub fn compute_cube_indices(vertices: usize) -> Vec<u16> {
+pub fn compute_cube_indices(vertices: usize) -> Vec<u32> {
     let indices = [0, 1, 2, 2, 3, 0]
         .iter()
         .cycle()
         .copied()
         .take(vertices / 4 * 6)
         .enumerate()
-        .map(|(i, b)| (i / 6 * 4 + b) as u16)
+        .map(|(i, b)| (i / 6 * 4 + b) as u32)
         .collect::<Vec<_>>();
     indices
 }
-pub fn create_cube_index_buffer(device: &wgpu::Device) -> Buffer<u16> {
+pub fn create_cube_index_buffer(device: &wgpu::Device) -> Buffer<u32> {
     let vertices = 24;
     let indices = compute_cube_indices(vertices);
     Buffer::new(&device, wgpu::BufferUsages::INDEX, &indices)

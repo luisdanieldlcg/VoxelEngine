@@ -88,6 +88,8 @@ impl BlockId {
                 Direction::BACK => TextureId::GRASS,
                 Direction::FRONT => TextureId::GRASS,
             },
+            BlockId::STONE => TextureId::STONE,
+            
         };
         atlas_uv_mapping(&id, corner[0], corner[1])
     }

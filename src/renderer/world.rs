@@ -1,9 +1,8 @@
 use crate::{
-    block::Block,
-    chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE},
+    chunk::Chunk,
 };
 
-use super::{atlas::Atlas, cube::CubePipeline, mesh::vertex::Vertex, IRenderer};
+use super::{atlas::Atlas, cube::CubePipeline,  IRenderer};
 
 pub struct WorldRenderer {
     chunk: Chunk,
@@ -24,7 +23,7 @@ impl IRenderer for WorldRenderer {
         render_pass.set_vertex_buffer(0, self.chunk.buffer.vertex_buf.buf.slice(..));
         render_pass.set_index_buffer(
             self.chunk.buffer.index_buf.buf.slice(..),
-            wgpu::IndexFormat::Uint16,
+            wgpu::IndexFormat::Uint32,
         );
         render_pass.draw_indexed(0..self.chunk.buffer.indices_len, 0, 0..1);
     }
@@ -68,15 +67,6 @@ impl WorldRenderer {
     }
 
     fn load_chunk(&mut self, queue: &wgpu::Queue) {
-        // update blocks
-        // for block in &mut self.chunk.blocks {
-        //     for x in 0..CHUNK_X_SIZE {
 
-        //     }
-        // }
-
-        self.chunk
-            .buffer
-            .update(queue, &self.chunk.mesh.vertices, &self.chunk.mesh.indices);
     }
 }

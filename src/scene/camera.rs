@@ -20,15 +20,15 @@ pub struct Camera {
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(10.0, 1.0, -5.0),
-            target: Vec3::new(1.0, 1.0, 0.0),
+            pos: Vec3::new(0.0, 1.0, -3.0),
+            target: Vec3::new(0.0, 1.0, 2.0),
             fov_y_deg: 45.0,
             width,
             height,
             near_plane: 0.1,
             far_plane: 400.0,
-            yaw: -90.0, // Point torwards Z,
-            pitch: 0.0,
+            yaw: -45.0, // Point torwards Z,
+            pitch: 00.0,
         }
     }
 

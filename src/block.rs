@@ -16,6 +16,7 @@ pub enum Direction {
 pub enum BlockId {
     AIR = 0,
     DIRT = 1,
+    STONE = 2,
 }
 
 #[derive(Debug)]

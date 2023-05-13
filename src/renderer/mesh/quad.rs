@@ -27,17 +27,6 @@ impl Quad {
             Quad::new(id, Direction::BACK, offset),
         ]
     }
-    pub fn get_indices(&self, i: u16) -> [u16; 6] {
-        let displacement = i * 4;
-        [
-            0 + displacement,
-            1 + displacement,
-            2 + displacement,
-            2 + displacement,
-            3 + displacement,
-            0 + displacement,
-        ]
-    }
 }
 
 impl Direction {
