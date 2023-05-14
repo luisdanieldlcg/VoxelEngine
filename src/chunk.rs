@@ -1,7 +1,4 @@
-use std::println;
-
 use vek::Vec3;
-
 use crate::{
     block::{Block, BlockId},
     renderer::{
@@ -10,7 +7,7 @@ use crate::{
     },
 };
 
-pub const CHUNK_Y_SIZE: usize = 200;
+pub const CHUNK_Y_SIZE: usize = 256;
 pub const CHUNK_Z_SIZE: usize = 16;
 pub const CHUNK_X_SIZE: usize = 16;
 pub const VERTICES: usize = 1228800;
@@ -48,15 +45,23 @@ impl Chunk {
         for y in 0..CHUNK_Y_SIZE {
             for z in 0..CHUNK_Z_SIZE {
                 for x in 0..CHUNK_X_SIZE {
+                    let id = if y < CHUNK_Y_SIZE - 1 {
+                        BlockId::DIRT
+                    } else {
+                        BlockId::GRASS
+                    };
+
                     let x = x as f32;
                     let y = y as f32;
                     let z = z as f32;
-                    let block = Block::new(BlockId::DIRT, Vec3::new(x, y, z) + offset);
+
+                    let block = Block::new(id, Vec3::new(x, y, z) + offset);
+                    
                     for quad in block.quads.iter() {
                         vertices.extend_from_slice(&quad.vertices);
-                    }  
+                    }
                     blocks.push(block);
-                }        
+                }
             }
         }
         indices.extend_from_slice(&compute_cube_indices(VERTICES));

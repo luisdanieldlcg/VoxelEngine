@@ -80,7 +80,8 @@ impl BlockId {
     pub fn map_texture(&self, corner: [u8; 2], dir: &Direction) -> Uv {
         let id = match self {
             BlockId::AIR => TextureId::DIRT,
-            BlockId::DIRT => match dir {
+            BlockId::DIRT => TextureId::DIRT,
+            BlockId::GRASS => match dir {
                 Direction::TOP => TextureId::GRASS_FULL,
                 Direction::BOTTOM => TextureId::DIRT,
                 Direction::LEFT => TextureId::GRASS,
@@ -89,7 +90,6 @@ impl BlockId {
                 Direction::FRONT => TextureId::GRASS,
             },
             BlockId::STONE => TextureId::STONE,
-            
         };
         atlas_uv_mapping(&id, corner[0], corner[1])
     }

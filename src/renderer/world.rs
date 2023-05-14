@@ -1,8 +1,6 @@
-use crate::{
-    chunk::Chunk,
-};
+use crate::chunk::Chunk;
 
-use super::{atlas::Atlas, cube::CubePipeline,  IRenderer};
+use super::{atlas::Atlas, cube::CubePipeline, IRenderer};
 
 pub struct WorldRenderer {
     chunk: Chunk,
@@ -66,7 +64,5 @@ impl WorldRenderer {
         world
     }
 
-    fn load_chunk(&mut self, queue: &wgpu::Queue) {
-
-    }
+    fn load_chunk(&mut self, queue: &wgpu::Queue) {}
 }
