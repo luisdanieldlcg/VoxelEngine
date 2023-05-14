@@ -1,3 +1,5 @@
+use std::println;
+
 use vek::Vec3;
 use crate::{
     block::{Block, BlockId},
@@ -10,7 +12,7 @@ use crate::{
 pub const CHUNK_Y_SIZE: usize = 256;
 pub const CHUNK_Z_SIZE: usize = 16;
 pub const CHUNK_X_SIZE: usize = 16;
-pub const VERTICES: usize = 1228800;
+pub const VERTICES: usize = 1_572_864;
 
 pub struct ChunkMesh {
     pub vertices: Vec<Vertex>,
@@ -45,10 +47,11 @@ impl Chunk {
         for y in 0..CHUNK_Y_SIZE {
             for z in 0..CHUNK_Z_SIZE {
                 for x in 0..CHUNK_X_SIZE {
-                    let id = if y < CHUNK_Y_SIZE - 1 {
-                        BlockId::DIRT
-                    } else {
+                    println!("{}", y);
+                    let id = if y + 1 >= CHUNK_Y_SIZE {
                         BlockId::GRASS
+                    } else {
+                        BlockId::DIRT
                     };
 
                     let x = x as f32;
