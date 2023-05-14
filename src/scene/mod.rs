@@ -27,7 +27,7 @@ impl Scene {
         transform_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> Self {
         let camera = Camera::new(window_width, window_height);
-        let mut camera_uniform = CameraUniform::empty();
+        let mut camera_uniform: CameraUniform = CameraUniform::empty();
         camera_uniform.update(&camera);
 
         let transform_buffer = Buffer::new(

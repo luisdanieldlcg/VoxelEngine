@@ -9,13 +9,12 @@ use winit::{
 };
 
 pub mod block;
-pub mod chunk;
 pub mod direction;
 pub mod global;
 pub mod renderer;
 pub mod scene;
 pub mod ui;
-
+pub mod world;
 fn main() {
     run();
 }

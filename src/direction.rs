@@ -11,14 +11,14 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn to_vec(self) -> Vec3<i32> {
+    pub fn normalized(self) -> Vec3<i32> {
         match self {
-            Direction::TOP => Vec3::new(0, 1, 0),
-            Direction::BOTTOM => Vec3::new(0, -1, 0),
-            Direction::LEFT => Vec3::new(-1, 0, 0),
-            Direction::RIGHT => Vec3::new(1, 0, 0),
-            Direction::FRONT => Vec3::new(0, 0, 1),
-            Direction::BACK => Vec3::new(0, 0, -1),
+            Direction::TOP => Vec3::unit_y(),
+            Direction::BOTTOM => -Vec3::unit_y(),
+            Direction::LEFT => -Vec3::unit_x(),
+            Direction::RIGHT => Vec3::unit_x(),
+            Direction::FRONT => Vec3::unit_z(),
+            Direction::BACK => -Vec3::unit_z(),
         }
     }
 }

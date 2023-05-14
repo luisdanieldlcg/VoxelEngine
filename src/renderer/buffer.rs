@@ -1,7 +1,7 @@
 use bytemuck::Pod;
 use wgpu::util::DeviceExt;
 
-use super::mesh::vertex::Vertex;
+use super::mesh::{vertex::Vertex, ChunkMesh};
 
 pub struct ChunkBuffer {
     pub vertex_buf: Buffer<Vertex>,
@@ -29,6 +29,11 @@ impl ChunkBuffer {
             ),
             indices_len: num_elements,
         }
+    }
+    pub fn update(&mut self, queue: &wgpu::Queue, mesh: &ChunkMesh) {
+        self.vertex_buf.update(queue, &mesh.vertices, 0);
+        self.index_buf.update(queue, &mesh.indices, 0);
+        self.indices_len = mesh.num_elements;
     }
 }
 

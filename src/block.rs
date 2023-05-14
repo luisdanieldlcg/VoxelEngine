@@ -37,6 +37,13 @@ impl Block {
         &self.pos
     }
 
+    pub fn iter_vertices(&self) -> Vec<Vertex> {
+        let mut vertices = Vec::new();
+        for quad in self.quads.iter() {
+            vertices.extend_from_slice(&quad.vertices);
+        }
+        vertices
+    }
     pub fn update(&mut self, offset: Vec3<i32>) {
         self.quads = Quad::create_block_quads(&self.id, offset);
     }

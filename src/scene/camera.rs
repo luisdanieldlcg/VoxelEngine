@@ -3,6 +3,8 @@ use std::time::Duration;
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
+use crate::world::chunk::CHUNK_Y_SIZE;
+
 type Point3 = Vec3<f32>;
 
 pub struct Camera {
@@ -20,7 +22,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(0.0, 1.0, -3.0),
+            pos: Vec3::new(0.0, CHUNK_Y_SIZE as f32, 0.0),
             target: Vec3::new(0.0, 1.0, 2.0),
             fov_y_deg: 45.0,
             width,
