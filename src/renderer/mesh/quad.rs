@@ -1,23 +1,23 @@
 use vek::Vec3;
 
-use crate::block::{BlockId, Direction};
+use crate::{block::BlockId, direction::Direction};
 
 use super::vertex::Vertex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Quad {
     pub vertices: [Vertex; 4],
     pub dir: Direction,
 }
 
 impl Quad {
-    pub fn new(id: &BlockId, dir: Direction, offset: Vec3<f32>) -> Self {
+    pub fn new(id: &BlockId, dir: Direction, offset: Vec3<i32>) -> Self {
         Self {
             vertices: dir.quad_vertices(id, offset),
             dir,
         }
     }
-    pub fn create_block_quads(id: &BlockId, offset: Vec3<f32>) -> [Quad; 6] {
+    pub fn create_block_quads(id: &BlockId, offset: Vec3<i32>) -> [Quad; 6] {
         [
             Quad::new(id, Direction::TOP, offset),
             Quad::new(id, Direction::BOTTOM, offset),
@@ -30,7 +30,7 @@ impl Quad {
 }
 
 impl Direction {
-    fn quad_vertices(&self, id: &BlockId, at: Vec3<f32>) -> [Vertex; 4] {
+    fn quad_vertices(&self, id: &BlockId, at: Vec3<i32>) -> [Vertex; 4] {
         let neg_x: f32 = -0.5;
         let pos_x: f32 = 0.5;
         let neg_y: f32 = -0.5;

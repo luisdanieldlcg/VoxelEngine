@@ -153,6 +153,7 @@ impl Renderer {
 
     pub fn update(&mut self, dt: Duration) {
         self.scene.update_scene(&self.queue, dt);
+        self.world_renderer.on_update(self.scene.camera_pos());
     }
 
     pub fn render(&mut self, window: &Window, dt: f32) -> Result<(), wgpu::SurfaceError> {

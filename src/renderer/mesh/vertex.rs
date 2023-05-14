@@ -1,7 +1,8 @@
 use vek::Vec3;
 
 use crate::{
-    block::{BlockId, Direction},
+    block::BlockId,
+    direction::Direction,
     renderer::atlas::{atlas_uv_mapping, TextureId},
 };
 
@@ -24,14 +25,14 @@ impl Vertex {
         v1: f32,
         v2: f32,
         v3: f32,
-        at: Vec3<f32>,
+        at: Vec3<i32>,
         uv: [u8; 2],
         id: &BlockId,
         dir: &Direction,
     ) -> Self {
         let texture_uv = id.map_texture(uv, dir);
         Self {
-            pos: [v1 + at.x, v2 + at.y, v3 + at.z],
+            pos: [v1 + at.x as f32, v2 + at.y as f32, v3 + at.z as f32],
             uv: texture_uv,
         }
     }

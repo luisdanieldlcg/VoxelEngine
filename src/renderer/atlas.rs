@@ -1,4 +1,4 @@
-use crate::block::{BlockId, Direction};
+use crate::{block::BlockId, direction::Direction};
 
 use super::texture::Texture;
 

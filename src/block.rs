@@ -2,17 +2,7 @@ use vek::Vec3;
 
 use crate::renderer::mesh::{quad::Quad, vertex::Vertex};
 
-#[derive(Debug)]
-pub enum Direction {
-    TOP,
-    BOTTOM,
-    LEFT,
-    RIGHT,
-    BACK,
-    FRONT,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BlockId {
     AIR = 0,
     DIRT = 1,
@@ -20,15 +10,15 @@ pub enum BlockId {
     STONE = 3,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     pub id: BlockId,
-    pub pos: Vec3<f32>,
+    pub pos: Vec3<i32>,
     pub quads: [Quad; 6],
 }
 
 impl Block {
-    pub fn new(id: BlockId, pos: Vec3<f32>) -> Self {
+    pub fn new(id: BlockId, pos: Vec3<i32>) -> Self {
         let quads = Quad::create_block_quads(&id, pos);
         Self { id, pos, quads }
     }
@@ -43,11 +33,11 @@ impl Block {
     pub fn id(&self) -> &BlockId {
         &self.id
     }
-    pub fn pos(&self) -> &Vec3<f32> {
+    pub fn pos(&self) -> &Vec3<i32> {
         &self.pos
     }
 
-    pub fn update(&mut self, offset: Vec3<f32>) {
+    pub fn update(&mut self, offset: Vec3<i32>) {
         self.quads = Quad::create_block_quads(&self.id, offset);
     }
 }

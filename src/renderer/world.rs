@@ -1,3 +1,5 @@
+use vek::Vec3;
+
 use crate::chunk::Chunk;
 
 use super::{atlas::Atlas, cube::CubePipeline, IRenderer};
@@ -63,6 +65,8 @@ impl WorldRenderer {
         Self::load_chunk(&mut world, queue);
         world
     }
+
+    pub fn on_update(&mut self, player_pos: Vec3<f32>) {}
 
     fn load_chunk(&mut self, queue: &wgpu::Queue) {}
 }
