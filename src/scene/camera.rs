@@ -22,15 +22,15 @@ pub struct Camera {
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(0.0, CHUNK_Y_SIZE as f32, 0.0),
+            pos: Vec3::new(20.0, CHUNK_Y_SIZE as f32 + 2.0, 7.0),
             target: Vec3::new(0.0, 1.0, 2.0),
             fov_y_deg: 45.0,
             width,
             height,
             near_plane: 0.1,
             far_plane: 400.0,
-            yaw: -45.0, // Point torwards Z,
-            pitch: 00.0,
+            yaw: 0.0, // Point torwards Z,
+            pitch: 10.0,
         }
     }
 

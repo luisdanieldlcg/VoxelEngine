@@ -1,10 +1,18 @@
+use std::{vec, println};
+
 use crate::{
     block::BlockId,
-    world::chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE},
+    world::chunk::{ Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE},
 };
 use vek::Vec3;
 
-use super::{atlas::Atlas, cube::CubePipeline, IRenderer, mesh::{vertex::Vertex, ChunkMesh}, buffer::compute_cube_indices};
+use super::{
+    atlas::Atlas,
+    buffer::compute_cube_indices,
+    cube::CubePipeline,
+    mesh::{vertex::Vertex, ChunkMesh},
+    IRenderer,
+};
 
 trait IWorldGenerator {
     fn initial_gen(&self, chunk_pos: Vec3<i32>) -> Chunk;
@@ -62,65 +70,58 @@ impl WorldRenderer {
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Line,
         );
-
+        let mut chunks = vec![];
+        for x in 0..4 {
+            chunks.push(Chunk::new(device, Vec3::new(x as i32 * 16, 1,  0)));
+        }
         let mut world = Self {
-            chunks: vec![Chunk::new(device, Vec3::zero())],
+            chunks,
             pipeline: cube_pipeline,
             pipeline_wireframe: cube_wireframe_pipeline,
             atlas,
             wireframe: false,
         };
-        world.load_chunk(queue, Vec3::zero());
+        world.load_chunks(queue);
 
-        
         world
     }
 
-    pub fn load_chunk(&mut self, queue: &wgpu::Queue, chunk_pos: Vec3<i32>) {
-        let new_mesh = self.recreate_chunk();
-        self.chunks[0].buffer.update(queue, &new_mesh);
+    pub fn load_chunks(&mut self, queue: &wgpu::Queue) {
+        for chunk in &mut self.chunks {
+            let new_mesh = Self::recreate_chunk(chunk);
+            chunk.buffer.update(queue, &new_mesh);
+        }
     }
 
-    pub fn recreate_chunk(&mut self) -> ChunkMesh{
+    pub fn recreate_chunk(chunk: &mut Chunk) -> ChunkMesh {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(24 * TOTAL_CHUNK_SIZE);
         for y in 0..CHUNK_Y_SIZE {
             for z in 0..CHUNK_Z_SIZE {
                 for x in 0..CHUNK_X_SIZE {
-                    let block = &self.chunks[0].blocks[y][x][z];
+                    let block = &chunk.blocks[y][x][z];
                     if let BlockId::AIR = block.id {
                         continue;
                     }
                     let block_pos = block.pos();
                     for quad in &block.quads {
                         let normal = quad.dir.normalized();
-                        let neighbor_pos = block_pos + normal;
-                        let mut visible = false;
-                        if Chunk::is_pos_in_bounds(neighbor_pos) {
-                            let neighbor_block = &self.chunks[0].blocks[neighbor_pos.y as usize]
-                                [neighbor_pos.x as usize][neighbor_pos.z as usize];
-                            
-                            if let BlockId::AIR = neighbor_block.id {
-                                visible = true;
-                            }
-                        } else {
-                            visible = true;
+                        let at = block_pos + normal;
+                        if !Chunk::is_pos_in_bounds(at) {
+                            vertices.extend_from_slice(&quad.vertices);
+                            continue;
                         }
-                        if visible {
+                        let neighbor = &chunk.blocks[at.y as usize][at.x as usize][at.z as usize];
+                        if let BlockId::AIR = neighbor.id {
                             vertices.extend_from_slice(&quad.vertices);
                         }
-                       
                     }
-                    
                 }
             }
         }
         let indices = compute_cube_indices(vertices.len());
-        ChunkMesh {
-            num_elements: indices.len() as u32,
-            vertices,
-            indices,
-        }
+        ChunkMesh::new(vertices, indices)
     }
-    pub fn on_update(&mut self, player_pos: Vec3<f32>) {}
-    fn update_chunks(&mut self) {}
+    pub fn on_update(&mut self, player_pos: Vec3<f32>) {
+        
+    }
 }
