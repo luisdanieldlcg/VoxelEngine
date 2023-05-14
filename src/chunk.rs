@@ -1,11 +1,5 @@
-<<<<<<< HEAD
-use std::println;
-
-use vek::Vec3;
-=======
 use std::vec;
 
->>>>>>> 8006886 (Store blocks on a 3d array and try removing unseen faces)
 use crate::{
     block::{Block, BlockId},
     renderer::{
