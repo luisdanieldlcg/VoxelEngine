@@ -1,4 +1,4 @@
-use std::vec;
+use std::{ops::Deref, vec};
 
 use crate::{
     block::{Block, BlockId},
@@ -39,11 +39,12 @@ impl Chunk {
         }
     }
     pub fn generate_mesh(offset: Vec3<i32>) -> (Vec<Vec<Vec<Block>>>, ChunkMesh) {
-        let default = Block::new(BlockId::AIR, Vec3::zero());
+        let default = Block::new(BlockId::DIRT, Vec3::zero());
         let mut voxels: Vec<Vec<Vec<Block>>> =
             vec![vec![vec![default; CHUNK_Z_SIZE]; CHUNK_X_SIZE]; CHUNK_Y_SIZE];
 
         let mut vertices: Vec<Vertex> = Vec::new();
+
         let mut indices: Vec<u32> = Vec::new();
 
         for x in 0..CHUNK_X_SIZE {
@@ -61,11 +62,7 @@ impl Chunk {
         }
         indices.extend_from_slice(&compute_cube_indices(INITIAL_CHUNK_VERTICES));
 
-        let mesh = ChunkMesh {
-            vertices,
-            num_elements: indices.len() as u32,
-            indices,
-        };
+        let mesh = ChunkMesh::new(vertices, indices);
         (voxels, mesh)
     }
 

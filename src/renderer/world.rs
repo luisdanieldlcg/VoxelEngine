@@ -1,8 +1,8 @@
-use std::{vec, println};
+use std::{println, vec};
 
 use crate::{
-    block::BlockId,
-    world::chunk::{ Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE},
+    block::{Block, BlockId},
+    world::chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE},
 };
 use vek::Vec3;
 
@@ -14,15 +14,16 @@ use super::{
     IRenderer,
 };
 
-trait IWorldGenerator {
-    fn initial_gen(&self, chunk_pos: Vec3<i32>) -> Chunk;
-}
+pub const CHUNK_GRID_ROWS: usize = 2;
+pub const CHUNK_GRID_COLS: usize = 2;
+pub const CHUNK_GRID_SIZE: usize = CHUNK_GRID_ROWS * CHUNK_GRID_COLS;
 pub struct WorldRenderer {
     chunks: Vec<Chunk>,
     pipeline: CubePipeline,
     pipeline_wireframe: CubePipeline,
     pub atlas: Atlas,
     pub wireframe: bool,
+    origin: Vec3<f32>,
 }
 
 impl IRenderer for WorldRenderer {
@@ -71,15 +72,21 @@ impl WorldRenderer {
             wgpu::PolygonMode::Line,
         );
         let mut chunks = vec![];
-        for x in 0..4 {
-            chunks.push(Chunk::new(device, Vec3::new(x as i32 * 16, 1,  0)));
+
+        for i in 0..CHUNK_GRID_ROWS {
+            for j in 0..CHUNK_GRID_COLS {
+                let offset = Vec3::new(i as i32 * 16, 0, j as i32 * 16);
+                chunks.push(Chunk::new(device, offset));
+            }
         }
+
         let mut world = Self {
             chunks,
             pipeline: cube_pipeline,
             pipeline_wireframe: cube_wireframe_pipeline,
             atlas,
             wireframe: false,
+            origin: Vec3::zero(),
         };
         world.load_chunks(queue);
 
@@ -87,22 +94,36 @@ impl WorldRenderer {
     }
 
     pub fn load_chunks(&mut self, queue: &wgpu::Queue) {
-        for chunk in &mut self.chunks {
-            let new_mesh = Self::recreate_chunk(chunk);
-            chunk.buffer.update(queue, &new_mesh);
+        for (i, chunk) in self.chunks.iter_mut().enumerate() {
+            let at = Vec3::new(i as i32 % CHUNK_GRID_ROWS as i32, 0, i as i32 / CHUNK_GRID_SIZE as i32);
+            // Self::gen_chunk(&mut chunk.blocks, at);
+            chunk.mesh = Self::compute_mesh(chunk);
         }
+        (0..CHUNK_GRID_SIZE).for_each(|i| {
+            let chunk= &mut self.chunks[i];
+            chunk.buffer.update(queue, &chunk.mesh);
+        });
+    }
+    pub fn gen_chunk(blocks: &mut Vec<Vec<Vec<Block>>>, offset: Vec3<i32>) {
+        (0..TOTAL_CHUNK_SIZE).into_iter().for_each(|i| {
+            let z = i / (CHUNK_X_SIZE * CHUNK_Y_SIZE);
+            let y = (i - z * CHUNK_X_SIZE * CHUNK_Y_SIZE) / CHUNK_X_SIZE;
+            let x = i - CHUNK_X_SIZE * (y + CHUNK_Y_SIZE * z);
+            blocks[y][x][z].update(offset);
+
+        });
     }
 
-    pub fn recreate_chunk(chunk: &mut Chunk) -> ChunkMesh {
+    pub fn compute_mesh(chunk: &Chunk) -> ChunkMesh {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(24 * TOTAL_CHUNK_SIZE);
         for y in 0..CHUNK_Y_SIZE {
             for z in 0..CHUNK_Z_SIZE {
                 for x in 0..CHUNK_X_SIZE {
+                    
                     let block = &chunk.blocks[y][x][z];
-                    if let BlockId::AIR = block.id {
-                        continue;
-                    }
+                  
                     let block_pos = block.pos();
+        
                     for quad in &block.quads {
                         let normal = quad.dir.normalized();
                         let at = block_pos + normal;
@@ -110,7 +131,11 @@ impl WorldRenderer {
                             vertices.extend_from_slice(&quad.vertices);
                             continue;
                         }
-                        let neighbor = &chunk.blocks[at.y as usize][at.x as usize][at.z as usize];
+                        let neighbor_x = at.x as usize;
+                        let neighbor_y = at.y as usize;
+                        let neighbor_z = at.z as usize;
+
+                        let neighbor = &chunk.blocks[neighbor_y][neighbor_x][neighbor_z];
                         if let BlockId::AIR = neighbor.id {
                             vertices.extend_from_slice(&quad.vertices);
                         }
@@ -121,7 +146,5 @@ impl WorldRenderer {
         let indices = compute_cube_indices(vertices.len());
         ChunkMesh::new(vertices, indices)
     }
-    pub fn on_update(&mut self, player_pos: Vec3<f32>) {
-        
-    }
+    pub fn on_update(&mut self, player_pos: Vec3<f32>) {}
 }
