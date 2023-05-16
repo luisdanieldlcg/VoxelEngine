@@ -72,8 +72,8 @@ impl Chunk {
                     // Translate position to the world space
                     let translation = Vec3::new(
                         local_pos.x + world_pos.x,
-                        local_pos.x + world_pos.y,
-                        local_pos.x + world_pos.z,
+                        local_pos.y + world_pos.y,
+                        local_pos.z + world_pos.z,
                     );
                     // Create quads at that location
                     Quad::generate_block_quads(&id, translation)
