@@ -1,13 +1,13 @@
-use std::{println, vec};
+use std::vec;
 
 use crate::{
-    block::{Block, BlockId},
+    block::BlockId,
     renderer::{
         buffer::{compute_cube_indices, ChunkBuffer},
         mesh::{quad::Quad, vertex::Vertex, ChunkMesh},
     },
 };
-use vek::{Vec2, Vec3};
+use vek::Vec3;
 
 pub const CHUNK_Y_SIZE: usize = 256;
 pub const CHUNK_Z_SIZE: usize = 16;
@@ -66,7 +66,7 @@ impl Chunk {
                     let x = x as i32;
                     let y = y as i32;
                     let z = z as i32;
-                    
+
                     // The position of the block in the chunk
                     let local_pos: Vec3<i32> = Vec3::new(x, y, z);
                     // Translate position to the world space

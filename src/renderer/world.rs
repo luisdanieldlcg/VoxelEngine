@@ -1,18 +1,12 @@
-use std::vec;
+use std::{println, vec};
 
 use crate::{
-    block::{Block, BlockId},
-    world::chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE},
+    block::Block,
+    world::chunk::{Chunk, CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE, TOTAL_CHUNK_SIZE}, scene::camera::Camera,
 };
 use vek::Vec3;
 
-use super::{
-    atlas::Atlas,
-    buffer::compute_cube_indices,
-    cube::CubePipeline,
-    mesh::{vertex::Vertex, ChunkMesh},
-    IRenderer,
-};
+use super::{atlas::Atlas, cube::CubePipeline, IRenderer};
 
 pub const CHUNK_GRID_ROWS: usize = 2;
 pub const CHUNK_GRID_COLS: usize = 2;
@@ -25,7 +19,7 @@ pub struct WorldRenderer {
     pipeline_wireframe: CubePipeline,
     pub atlas: Atlas,
     pub wireframe: bool,
-    origin: Vec3<i32>,
+    center_chunk: Vec3<i32>,
 }
 
 impl IRenderer for WorldRenderer {
@@ -55,7 +49,7 @@ impl WorldRenderer {
         queue: &wgpu::Queue,
         shader: wgpu::ShaderModule,
         transform_bind_group_layout: &wgpu::BindGroupLayout,
-        player_pos: Vec3<f32>,
+        camera: &mut Camera
     ) -> Self {
         let texture_atlas = include_bytes!("../../assets/atlas.png");
         let atlas = Atlas::new(texture_atlas, &device, &queue);
@@ -82,90 +76,53 @@ impl WorldRenderer {
             pipeline_wireframe: cube_wireframe_pipeline,
             atlas,
             wireframe: false,
-            origin: Vec3::zero(),
+            center_chunk: Vec3::zero(),
         };
-        world.load_initial_chunks(device, player_pos);
+        world.center_chunk = world.world_to_chunk_pos(camera.pos);
+        world.load_initial_chunks(device, camera);
         world
     }
 
-    pub fn load_initial_chunks(&mut self, device: &wgpu::Device, player_pos: Vec3<f32>) {
-        let player_chunk_x = (player_pos.x / CHUNK_X_SIZE as f32).floor() as i32;
-        let player_chunk_z = (player_pos.z / CHUNK_Z_SIZE as f32).floor() as i32;
+    pub fn is_out_of_center(&self, chunk_pos: Vec3<i32>) -> bool {
+        return  self.center_chunk.x != chunk_pos.x || self.center_chunk.z != chunk_pos.z;
 
-        for x in -RENDER_DISTANCE..=RENDER_DISTANCE {
+    }
+
+    pub fn on_update(&mut self, player_pos: Vec3<f32>, device: &wgpu::Device) {
+        let current_chunk_pos = self.world_to_chunk_pos(player_pos);
+        
+        // if self.is_out_of_center(current_chunk_pos) {
+        //     println!("The player is out of its chunk");
+        // } else {
+        //     println!("The player is in its chunk")
+        // }
+    }
+
+    pub fn load_initial_chunks(&mut self, device: &wgpu::Device, camera: &mut Camera) {
+        let player_chunk_pos: Vec3<i32> = self.world_to_chunk_pos(camera.pos);
+
+        for x in -RENDER_DISTANCE..=RENDER_DISTANCE  {
             for z in -RENDER_DISTANCE..=RENDER_DISTANCE {
-                let chunk_x = player_chunk_x + (x * CHUNK_X_SIZE as i32);
-                let chunk_z = player_chunk_z + (z * CHUNK_Z_SIZE as i32);
-
-                let chunk_pos = Vec3::new(chunk_x, 0, chunk_z);
-                self.chunks.push(Chunk::new(device, chunk_pos));
+                let chunk_pos = player_chunk_pos + Vec3::new(x, 0, z);
+                let world_pos = self.chunk_pos_to_world_pos(chunk_pos);
+                self.chunks.push(Chunk::new(device, world_pos));
             }
         }
     }
-    //        [] [] []             -32, 256, -64  example player pos
-    //        [] [] []             -2,  256, -4   example chunk at player pos
-    //        [] [] []
-    //  []
+    
+    /// Returns the chunk at the given world position
     pub fn world_to_chunk_pos(&mut self, pos: Vec3<f32>) -> Vec3<i32> {
-        let x = (pos.x as f32 / CHUNK_X_SIZE as f32).floor() as i32;
-        let z = (pos.z as f32 / CHUNK_Z_SIZE as f32).floor() as i32;
+        let x = (pos.x  / CHUNK_X_SIZE as f32).floor() as i32;
+        let z = (pos.z  / CHUNK_Z_SIZE as f32).floor() as i32;
         Vec3::new(x, 0, z)
     }
-
-    pub fn load_chunks(&mut self, queue: &wgpu::Queue) {
-        for (i, chunk) in self.chunks.iter_mut().enumerate() {
-            let at = Vec3::new(
-                i as i32 % CHUNK_GRID_ROWS as i32,
-                0,
-                i as i32 / CHUNK_GRID_SIZE as i32,
-            );
-            // Self::gen_chunk(&mut chunk.blocks, at);
-            // chunk.mesh = Self::compute_mesh(chunk);
-        }
-        (0..CHUNK_GRID_SIZE).for_each(|i| {
-            let chunk = &mut self.chunks[i];
-            chunk.buffer.update(queue, &chunk.mesh);
-        });
-    }
-    pub fn gen_chunk(blocks: &mut Vec<Vec<Vec<Block>>>, offset: Vec3<i32>) {
-        (0..TOTAL_CHUNK_SIZE).into_iter().for_each(|i| {
-            let z = i / (CHUNK_X_SIZE * CHUNK_Y_SIZE);
-            let y = (i - z * CHUNK_X_SIZE * CHUNK_Y_SIZE) / CHUNK_X_SIZE;
-            let x = i - CHUNK_X_SIZE * (y + CHUNK_Y_SIZE * z);
-            // blocks[y][x][z].update(offset);
-        });
+    /// Returns the world position of the given chunk
+    pub fn chunk_pos_to_world_pos(&mut self, chunk_pos: Vec3<i32>) -> Vec3<i32> {
+        let x = chunk_pos.x * CHUNK_X_SIZE as i32;
+        let z = chunk_pos.z * CHUNK_Z_SIZE as i32;
+        Vec3::new(x, chunk_pos.y, z)
     }
 
-    // pub fn compute_mesh(chunk: &Chunk) -> ChunkMesh {
-    //     let mut vertices: Vec<Vertex> = Vec::with_capacity(24 * TOTAL_CHUNK_SIZE);
-    //     for y in 0..CHUNK_Y_SIZE {
-    //         for z in 0..CHUNK_Z_SIZE {
-    //             for x in 0..CHUNK_X_SIZE {
-    //                 let block = &chunk.blocks[y][x][z];
 
-    //                 let block_pos = block.pos();
 
-    //                 for quad in &block.quads {
-    //                     let normal = quad.dir.normalized();
-    //                     let at = block_pos + normal;
-    //                     if !Chunk::is_pos_in_bounds(at) {
-    //                         vertices.extend_from_slice(&quad.vertices);
-    //                         continue;
-    //                     }
-    //                     let neighbor_x = at.x as usize;
-    //                     let neighbor_y = at.y as usize;
-    //                     let neighbor_z = at.z as usize;
-
-    //                     let neighbor = &chunk.blocks[neighbor_y][neighbor_x][neighbor_z];
-    //                     if let BlockId::AIR = neighbor.id {
-    //                         vertices.extend_from_slice(&quad.vertices);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     let indices = compute_cube_indices(vertices.len());
-    //     ChunkMesh::new(vertices, indices)
-    // }
-    pub fn on_update(&mut self, player_pos: Vec3<f32>) {}
 }

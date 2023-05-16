@@ -22,7 +22,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(20.0, CHUNK_Y_SIZE as f32 + 2.0, 7.0),
+            pos: Vec3::new(120.0, CHUNK_Y_SIZE as f32 + 2.0, 64.0),
             target: Vec3::new(0.0, 1.0, 2.0),
             fov_y_deg: 45.0,
             width,

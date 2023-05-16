@@ -105,7 +105,7 @@ impl Renderer {
                     count: None,
                 }],
             });
-        let scene = Scene::new(
+        let mut scene = Scene::new(
             &device,
             size.width as f32,
             size.height as f32,
@@ -118,7 +118,7 @@ impl Renderer {
             &queue,
             shader,
             &transform_bind_group_layout,
-            scene.camera_pos(),
+            &mut scene.camera,
         );
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 
@@ -155,7 +155,8 @@ impl Renderer {
 
     pub fn update(&mut self, dt: Duration) {
         self.scene.update_scene(&self.queue, dt);
-        self.world_renderer.on_update(self.scene.camera_pos());
+        self.world_renderer
+            .on_update(self.scene.camera_pos(), &self.device);
     }
 
     pub fn render(&mut self, window: &Window, dt: f32) -> Result<(), wgpu::SurfaceError> {

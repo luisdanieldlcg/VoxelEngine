@@ -8,7 +8,7 @@ use self::camera::{Camera, CameraController, CameraUniform};
 pub mod camera;
 
 pub struct Scene {
-    camera: Camera,
+    pub camera: Camera,
     camera_uniform: CameraUniform,
     uniform_buf: Buffer<CameraUniform>,
     pub camera_controller: camera::CameraController,
