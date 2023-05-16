@@ -36,16 +36,6 @@ impl Vertex {
             uv: texture_uv,
         }
     }
-
-    pub fn offset(self, offset_x: f32, offset_y: f32, offset_z: f32) -> Self {
-        let v1 = self.pos[0] + offset_x;
-        let v2 = self.pos[1] + offset_y;
-        let v3 = self.pos[2] + offset_z;
-        Self {
-            pos: [v1, v2, v3],
-            uv: self.uv,
-        }
-    }
 }
 
 impl Vertex {

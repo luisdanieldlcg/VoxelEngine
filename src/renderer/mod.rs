@@ -9,6 +9,7 @@ pub mod world;
 use self::{texture::Texture, ui::UIRenderer, world::WorldRenderer};
 use crate::{scene::Scene, ui::EguiInstance};
 use std::time::Duration;
+use vek::Vec3;
 use winit::window::Window;
 
 pub trait IRenderer {
@@ -117,6 +118,7 @@ impl Renderer {
             &queue,
             shader,
             &transform_bind_group_layout,
+            scene.camera_pos(),
         );
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
 

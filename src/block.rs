@@ -1,7 +1,5 @@
 use vek::Vec3;
 
-use crate::renderer::mesh::{quad::Quad, vertex::Vertex};
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockId {
     AIR = 0,
@@ -9,25 +7,20 @@ pub enum BlockId {
     GRASS = 2,
     STONE = 3,
 }
-
+impl BlockId {
+    pub fn is_air(&self) -> bool {
+        self == &BlockId::AIR
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Block {
     pub id: BlockId,
     pub pos: Vec3<i32>,
-    pub quads: [Quad; 6],
 }
 
 impl Block {
     pub fn new(id: BlockId, pos: Vec3<i32>) -> Self {
-        let quads = Quad::create_block_quads(&id, pos);
-        Self { id, pos, quads }
-    }
-    pub fn vertices(&self) -> Vec<Vertex> {
-        let mut vertices = Vec::new();
-        for quad in self.quads.iter() {
-            vertices.extend_from_slice(&quad.vertices);
-        }
-        vertices
+        Self { id, pos }
     }
 
     pub fn id(&self) -> &BlockId {
@@ -35,16 +28,5 @@ impl Block {
     }
     pub fn pos(&self) -> &Vec3<i32> {
         &self.pos
-    }
-
-    pub fn iter_vertices(&self) -> Vec<Vertex> {
-        let mut vertices = Vec::new();
-        for quad in self.quads.iter() {
-            vertices.extend_from_slice(&quad.vertices);
-        }
-        vertices
-    }
-    pub fn update(&mut self, offset: Vec3<i32>) {
-        self.quads = Quad::create_block_quads(&self.id, offset);
     }
 }
