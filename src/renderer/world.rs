@@ -11,7 +11,7 @@ use super::{atlas::Atlas, cube::CubePipeline, IRenderer};
 pub const CHUNK_GRID_ROWS: usize = 2;
 pub const CHUNK_GRID_COLS: usize = 2;
 pub const CHUNK_GRID_SIZE: usize = CHUNK_GRID_ROWS * CHUNK_GRID_COLS;
-pub const RENDER_DISTANCE: i32 = 1;
+pub const RENDER_DISTANCE: i32 = 2;
 
 pub struct WorldRenderer {
     chunks: Vec<Chunk>,
@@ -19,7 +19,8 @@ pub struct WorldRenderer {
     pipeline_wireframe: CubePipeline,
     pub atlas: Atlas,
     pub wireframe: bool,
-    center_chunk: Vec3<i32>,
+    center_offset: Vec3<i32>,
+    chunks_origin: Vec3<i32>,
 }
 
 impl IRenderer for WorldRenderer {
@@ -70,32 +71,39 @@ impl WorldRenderer {
         );
         let chunks: Vec<Chunk> = vec![];
 
+        let center_offset = Vec3::new(0, 0, 0);
+        let chunks_origin = Vec3::new(RENDER_DISTANCE as i32 / 2, 0, RENDER_DISTANCE as i32 / 2);
+
         let mut world = Self {
             chunks,
             pipeline: cube_pipeline,
             pipeline_wireframe: cube_wireframe_pipeline,
             atlas,
             wireframe: false,
-            center_chunk: Vec3::zero(),
+            center_offset,
+            chunks_origin,
         };
-        world.center_chunk = world.world_to_chunk_pos(camera.pos);
         world.load_initial_chunks(device, camera);
         world
     }
 
-    pub fn is_out_of_center(&self, chunk_pos: Vec3<i32>) -> bool {
-        return  self.center_chunk.x != chunk_pos.x || self.center_chunk.z != chunk_pos.z;
+    pub fn set_center_at(&mut self, block_pos: Vec3<f32>) {
+        let chunk_pos = self.world_to_chunk_pos(block_pos);
+        let chunks_origin = chunk_pos - Vec3::new(RENDER_DISTANCE / 2, 0, RENDER_DISTANCE / 2);
+        println!("Chunk pos: {:?}", chunk_pos);
+        println!("Chunks origin: {:?}", chunks_origin);
+
+        if chunks_origin == self.chunks_origin {
+            println!("Chunks origin is the same, no need to update");
+            return;
+        }
+        // Update the center
+        self.center_offset = chunk_pos;
+        self.chunks_origin = chunks_origin;
 
     }
-
     pub fn on_update(&mut self, player_pos: Vec3<f32>, device: &wgpu::Device) {
-        let current_chunk_pos = self.world_to_chunk_pos(player_pos);
-        
-        // if self.is_out_of_center(current_chunk_pos) {
-        //     println!("The player is out of its chunk");
-        // } else {
-        //     println!("The player is in its chunk")
-        // }
+       self.set_center_at(player_pos);
     }
 
     pub fn load_initial_chunks(&mut self, device: &wgpu::Device, camera: &mut Camera) {
@@ -113,8 +121,9 @@ impl WorldRenderer {
     /// Returns the chunk at the given world position
     pub fn world_to_chunk_pos(&mut self, pos: Vec3<f32>) -> Vec3<i32> {
         let x = (pos.x  / CHUNK_X_SIZE as f32).floor() as i32;
+        let y = (pos.y  / CHUNK_Y_SIZE as f32).floor() as i32;
         let z = (pos.z  / CHUNK_Z_SIZE as f32).floor() as i32;
-        Vec3::new(x, 0, z)
+        Vec3::new(x, y, z)
     }
     /// Returns the world position of the given chunk
     pub fn chunk_pos_to_world_pos(&mut self, chunk_pos: Vec3<i32>) -> Vec3<i32> {
