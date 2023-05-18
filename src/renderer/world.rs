@@ -1,4 +1,4 @@
-use std::{vec, collections::HashSet};
+use std::{collections::HashSet, vec};
 
 use crate::{
     scene::camera::Camera,
@@ -91,10 +91,10 @@ impl WorldRenderer {
                 self.chunks_pos.remove(&chunk.world_offset);
             }
         }
-      if dirty {
-        self.unload_chunks();
-        self.load_chunks(player_chunk_pos, device);
-      }
+        if dirty {
+            self.unload_chunks();
+            self.load_chunks(player_chunk_pos, device);
+        }
     }
 
     pub fn unload_chunks(&mut self) {
@@ -127,7 +127,7 @@ impl WorldRenderer {
         for x in -RENDER_DISTANCE..=RENDER_DISTANCE {
             for z in -RENDER_DISTANCE..=RENDER_DISTANCE {
                 let pos = ChunkPos::new(x, z);
-                self.chunks_pos.insert(pos.clone());    
+                self.chunks_pos.insert(pos.clone());
                 self.chunks.push(Chunk::new(device, pos));
             }
         }

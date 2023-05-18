@@ -4,7 +4,7 @@ use crate::{
     block::BlockId,
     renderer::{
         buffer::{compute_cube_indices, ChunkBuffer},
-        mesh::{quad::Quad, vertex::Vertex, ChunkMesh},
+        mesh::{quad::Quad, ChunkMesh},
     },
 };
 use vek::Vec3;
@@ -15,7 +15,7 @@ pub const CHUNK_WIDTH: usize = 16;
 pub const TOTAL_CHUNK_SIZE: usize = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
 
 pub struct Chunk {
-    pub blocks: Vec<Vec<Vec<BlockId>>>,
+    pub blocks: Vec<BlockId>,
     pub world_offset: ChunkPos,
     pub buffer: ChunkBuffer,
     pub mesh: ChunkMesh,
@@ -25,16 +25,10 @@ pub struct Chunk {
 impl Chunk {
     pub fn new(device: &wgpu::Device, pos: ChunkPos) -> Self {
         let instant = std::time::Instant::now();
-        let blocks = Self::generate_data();
-        let mesh = Self::generate_mesh(&blocks, &pos);
+        let (blocks, mesh) = Self::generate(&pos);
         let elapsed = instant.elapsed();
 
-        let buffer = ChunkBuffer::new(
-            &device,
-            mesh.vertices.clone(),
-            mesh.indices.clone(),
-            mesh.num_elements,
-        );
+        let buffer = ChunkBuffer::new(&device, &mesh.vertices, &mesh.indices, mesh.num_elements);
         println!("Took {}ms to generate chunk", elapsed.as_millis());
 
         Self {
@@ -45,8 +39,10 @@ impl Chunk {
             loaded: true,
         }
     }
-    pub fn generate_data() -> Vec<Vec<Vec<BlockId>>> {
-        let mut blocks = vec![vec![vec![BlockId::AIR; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_DEPTH];
+    pub fn generate(pos: &ChunkPos) -> (Vec<BlockId>, ChunkMesh) {
+        let mut blocks = vec![BlockId::AIR; TOTAL_CHUNK_SIZE];
+        let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
+
         for x in 0..CHUNK_WIDTH {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_DEPTH {
@@ -55,28 +51,9 @@ impl Chunk {
                     } else {
                         BlockId::DIRT
                     };
-                    
-                    blocks[x][y][z] = block_in_chunk;
-                }
-            }
-        }
-        blocks
-    }
-    pub fn generate_mesh(blocks: &Vec<Vec<Vec<BlockId>>>, pos: &ChunkPos) -> ChunkMesh {
-        let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
-        for x in 0..CHUNK_WIDTH {
-            for y in 0..CHUNK_HEIGHT {
-                for z in 0..CHUNK_DEPTH {
-                    // in memory block
-                    let id: &BlockId = &blocks[x][y][z];
-
-                    let x = x as i32;
-                    let y = y as i32;
-                    let z = z as i32;
 
                     // The position of the block in the chunk
-                    let local_pos: Vec3<i32> = Vec3::new(x, y, z);
-
+                    let local_pos = Vec3::new(x as i32, y as i32, z as i32);
                     let world_pos = pos.to_world();
 
                     // Translate position to the world space
@@ -85,17 +62,33 @@ impl Chunk {
                         local_pos.y,
                         local_pos.z + world_pos.z,
                     );
-                    // Create quads at that location
-                    Quad::generate_block_quads(&id, translation)
-                        .iter()
-                        .for_each(|quad| create_quad(blocks, local_pos, &mut vertices, quad));
+                    let quads = Quad::generate_block_quads(&block_in_chunk, translation);
+                    let index = compute_1d(x, y, z);
+                    
+                    blocks[index] = block_in_chunk;
+
+                    // Do not render faces if the block is surrounded by air
+                    quads.iter().for_each(|quad| {
+                        let index = compute_1d(x, y, z);
+                        let normal = quad.dir.normalized();
+                        // The position of the neighbor block in chunk
+                        let neighbor = local_pos + normal;
+                        if !Chunk::is_pos_in_bounds(neighbor) {
+                            vertices.extend(quad.vertices);
+                            return;
+                        }
+                        let neighbor_block = &blocks[index];
+                        if neighbor_block.is_air() {
+                            vertices.extend(quad.vertices);
+                        }
+                    });
                 }
             }
         }
         let indices = compute_cube_indices(vertices.len());
-        ChunkMesh::new(vertices, indices)
-    }
 
+        (blocks, ChunkMesh::new(vertices, indices))
+    }
     /// Checks if a given position is in bounds of the chunk
     pub fn is_pos_in_bounds(pos: Vec3<i32>) -> bool {
         if pos.x >= 0 && pos.y >= 0 && pos.z >= 0 {
@@ -104,25 +97,6 @@ impl Chunk {
                 && pos.z < CHUNK_DEPTH as i32;
         }
         false
-    }
-}
-
-fn create_quad(
-    blocks: &Vec<Vec<Vec<BlockId>>>,
-    local_pos: Vec3<i32>,
-    vertices: &mut Vec<Vertex>,
-    quad: &Quad,
-) {
-    let normal = quad.dir.normalized();
-    // The position of the neighbor block in chunk
-    let neighbor = local_pos + normal;
-    if !Chunk::is_pos_in_bounds(neighbor) {
-        vertices.extend(quad.vertices);
-        return;
-    }
-    let neighbor_block = &blocks[neighbor.x as usize][neighbor.y as usize][neighbor.z as usize];
-    if neighbor_block.is_air() {
-        vertices.extend(quad.vertices);
     }
 }
 
@@ -180,4 +154,8 @@ impl ChunkPos {
     pub fn to_world(&self) -> Vec3<i32> {
         Vec3::new(self.x * CHUNK_WIDTH as i32, 0, self.z * CHUNK_DEPTH as i32)
     }
+}
+
+pub fn compute_1d(x: usize, y: usize, z: usize) -> usize {
+    x + y * CHUNK_WIDTH + z * CHUNK_WIDTH * CHUNK_HEIGHT
 }

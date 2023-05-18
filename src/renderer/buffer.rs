@@ -12,8 +12,8 @@ pub struct ChunkBuffer {
 impl ChunkBuffer {
     pub fn new(
         device: &wgpu::Device,
-        vertices: Vec<Vertex>,
-        indices: Vec<u32>,
+        vertices: &Vec<Vertex>,
+        indices: &Vec<u32>,
         num_elements: u32,
     ) -> Self {
         Self {
