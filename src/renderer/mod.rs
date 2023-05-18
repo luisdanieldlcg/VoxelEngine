@@ -182,7 +182,7 @@ impl Renderer {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
                             r: 0.1,
                             g: 0.3,
-                            b: 0.5,
+                            b: 0.6,
                             a: 1.0,
                         }),
                         store: true,

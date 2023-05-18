@@ -3,7 +3,7 @@ use std::time::Duration;
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
-use crate::world::chunk::CHUNK_Y_SIZE;
+use crate::world::chunk::CHUNK_HEIGHT;
 
 type Point3 = Vec3<f32>;
 
@@ -22,7 +22,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            pos: Vec3::new(120.0, CHUNK_Y_SIZE as f32 + 2.0, 64.0),
+            pos: Vec3::new(8.0, CHUNK_HEIGHT as f32 + 1.0, 8.0),
             target: Vec3::new(0.0, 1.0, 2.0),
             fov_y_deg: 45.0,
             width,
@@ -71,9 +71,9 @@ impl Camera {
             self.near_plane,
             self.far_plane,
         );
-        let model = Mat4::translation_3d(Vec3::new(10.0, 0.0, 0.0));
-        let view = Mat4::look_at_lh(self.pos, self.target + self.pos, Vec3::unit_y());
-        proj * view * model
+        // let model = Mat4::translation_3d(Vec3::new(10.0, 0.0, 0.0));
+        let view: Mat4<f32> = Mat4::look_at_lh(self.pos, self.target + self.pos, Vec3::unit_y());
+        proj * view
     }
 }
 
@@ -100,7 +100,7 @@ impl CameraController {
             amount_down: 0.0,
             mouse_dx: 0.0,
             mouse_dy: 0.0,
-            speed: 5.0,
+            speed: 7.0,
             // TODO: find out why sensitivity has to be so high
             sensitivity: 70.0,
         }

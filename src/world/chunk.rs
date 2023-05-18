@@ -1,4 +1,4 @@
-use std::vec;
+use std::{println, vec};
 
 use crate::{
     block::BlockId,
@@ -9,23 +9,27 @@ use crate::{
 };
 use vek::Vec3;
 
-pub const CHUNK_Y_SIZE: usize = 256;
-pub const CHUNK_Z_SIZE: usize = 16;
-pub const CHUNK_X_SIZE: usize = 16;
-pub const TOTAL_CHUNK_SIZE: usize = CHUNK_X_SIZE * CHUNK_Y_SIZE * CHUNK_Z_SIZE;
-pub const INITIAL_CHUNK_VERTICES: usize = (256 * 16 * 16) * 24;
+pub const CHUNK_HEIGHT: usize = 256;
+pub const CHUNK_DEPTH: usize = 16;
+pub const CHUNK_WIDTH: usize = 16;
+pub const TOTAL_CHUNK_SIZE: usize = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
 
 pub struct Chunk {
     pub blocks: Vec<Vec<Vec<BlockId>>>,
-    pub pos: Vec3<i32>,
+    pub world_offset: ChunkPos,
     pub buffer: ChunkBuffer,
     pub mesh: ChunkMesh,
+    pub loaded: bool,
 }
 
 impl Chunk {
-    pub fn new(device: &wgpu::Device, pos: Vec3<i32>) -> Self {
+    pub fn new(device: &wgpu::Device, pos: ChunkPos) -> Self {
+        let instant = std::time::Instant::now();
         let blocks = Self::generate_data();
-        let mesh = Self::generate_mesh(&blocks, pos);
+        let mesh = Self::generate_mesh(&blocks, &pos);
+        let elapsed = instant.elapsed();
+        println!("Took {}ms to generate chunk", elapsed.as_millis());
+
         let buffer = ChunkBuffer::new(
             &device,
             mesh.vertices.clone(),
@@ -37,15 +41,16 @@ impl Chunk {
             blocks,
             buffer,
             mesh,
-            pos,
+            world_offset: pos,
+            loaded: true,
         }
     }
     pub fn generate_data() -> Vec<Vec<Vec<BlockId>>> {
-        let mut blocks = vec![vec![vec![BlockId::AIR; CHUNK_X_SIZE]; CHUNK_Y_SIZE]; CHUNK_Z_SIZE];
-        for x in 0..CHUNK_X_SIZE {
-            for y in 0..CHUNK_Y_SIZE {
-                for z in 0..CHUNK_Z_SIZE {
-                    let block_in_chunk = match y == CHUNK_Y_SIZE - 1 {
+        let mut blocks = vec![vec![vec![BlockId::AIR; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_DEPTH];
+        for x in 0..CHUNK_WIDTH {
+            for y in 0..CHUNK_HEIGHT {
+                for z in 0..CHUNK_DEPTH {
+                    let block_in_chunk = match y == CHUNK_HEIGHT - 1 {
                         true => BlockId::GRASS,
                         false => BlockId::DIRT,
                     };
@@ -55,11 +60,11 @@ impl Chunk {
         }
         blocks
     }
-    pub fn generate_mesh(blocks: &Vec<Vec<Vec<BlockId>>>, world_pos: Vec3<i32>) -> ChunkMesh {
-        let mut vertices = Vec::new();
-        for x in 0..CHUNK_X_SIZE {
-            for y in 0..CHUNK_Y_SIZE {
-                for z in 0..CHUNK_Z_SIZE {
+    pub fn generate_mesh(blocks: &Vec<Vec<Vec<BlockId>>>, pos: &ChunkPos) -> ChunkMesh {
+        let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
+        for x in 0..CHUNK_WIDTH {
+            for y in 0..CHUNK_HEIGHT {
+                for z in 0..CHUNK_DEPTH {
                     // in memory block
                     let id: &BlockId = &blocks[x][y][z];
 
@@ -69,10 +74,13 @@ impl Chunk {
 
                     // The position of the block in the chunk
                     let local_pos: Vec3<i32> = Vec3::new(x, y, z);
+
+                    let world_pos = pos.to_world();
+
                     // Translate position to the world space
                     let translation = Vec3::new(
                         local_pos.x + world_pos.x,
-                        local_pos.y + world_pos.y,
+                        local_pos.y,
                         local_pos.z + world_pos.z,
                     );
                     // Create quads at that location
@@ -89,9 +97,9 @@ impl Chunk {
     /// Checks if a given position is in bounds of the chunk
     pub fn is_pos_in_bounds(pos: Vec3<i32>) -> bool {
         if pos.x >= 0 && pos.y >= 0 && pos.z >= 0 {
-            return pos.x < CHUNK_X_SIZE as i32
-                && pos.y < CHUNK_Y_SIZE as i32
-                && pos.z < CHUNK_Z_SIZE as i32;
+            return pos.x < CHUNK_WIDTH as i32
+                && pos.y < CHUNK_HEIGHT as i32
+                && pos.z < CHUNK_DEPTH as i32;
         }
         false
     }
@@ -113,5 +121,61 @@ fn create_quad(
     let neighbor_block = &blocks[neighbor.x as usize][neighbor.y as usize][neighbor.z as usize];
     if neighbor_block.is_air() {
         vertices.extend(quad.vertices);
+    }
+}
+
+/// Represents the offset or indices of a chunk
+/// relative to the world position.
+///
+/// Example:
+///
+/// If a chunk is 16 units wide and 16 units deep:
+///
+/// World Position: (32, 0, -128) -> ChunkPos: (2, 0, -8).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ChunkPos {
+    pub x: i32,
+    pub z: i32,
+}
+
+impl std::ops::Sub<ChunkPos> for ChunkPos {
+    type Output = ChunkPos;
+
+    fn sub(self, rhs: ChunkPos) -> Self::Output {
+        Self {
+            x: self.x - rhs.x,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+impl std::ops::Add<ChunkPos> for ChunkPos {
+    type Output = ChunkPos;
+
+    fn add(self, rhs: ChunkPos) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ChunkPos {
+    pub const ORIGIN: ChunkPos = ChunkPos::new(0, 0);
+
+    pub const fn new(x: i32, z: i32) -> Self {
+        Self { x, z }
+    }
+
+    /// Returns the chunk pos at the given world pos
+    pub fn from_world(pos: Vec3<f32>) -> Self {
+        let x = (pos.x / CHUNK_WIDTH as f32).floor() as i32;
+        let z = (pos.z / CHUNK_DEPTH as f32).floor() as i32;
+        Self { x, z }
+    }
+
+    /// Returns the world pos of the current chunk.
+    pub fn to_world(&self) -> Vec3<i32> {
+        Vec3::new(self.x * CHUNK_WIDTH as i32, 0, self.z * CHUNK_DEPTH as i32)
     }
 }
