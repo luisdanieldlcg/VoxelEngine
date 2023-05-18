@@ -28,7 +28,6 @@ impl Chunk {
         let blocks = Self::generate_data();
         let mesh = Self::generate_mesh(&blocks, &pos);
         let elapsed = instant.elapsed();
-        println!("Took {}ms to generate chunk", elapsed.as_millis());
 
         let buffer = ChunkBuffer::new(
             &device,
@@ -36,6 +35,7 @@ impl Chunk {
             mesh.indices.clone(),
             mesh.num_elements,
         );
+        println!("Took {}ms to generate chunk", elapsed.as_millis());
 
         Self {
             blocks,
@@ -50,10 +50,12 @@ impl Chunk {
         for x in 0..CHUNK_WIDTH {
             for y in 0..CHUNK_HEIGHT {
                 for z in 0..CHUNK_DEPTH {
-                    let block_in_chunk = match y == CHUNK_HEIGHT - 1 {
-                        true => BlockId::GRASS,
-                        false => BlockId::DIRT,
+                    let block_in_chunk = if y == CHUNK_HEIGHT - 1 {
+                        BlockId::GRASS
+                    } else {
+                        BlockId::DIRT
                     };
+                    
                     blocks[x][y][z] = block_in_chunk;
                 }
             }
