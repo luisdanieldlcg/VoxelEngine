@@ -69,6 +69,7 @@ impl<T: Copy + Pod> Buffer<T> {
         self.len
     }
 }
+
 pub fn compute_cube_indices(vertices: usize) -> Vec<u32> {
     let indices = [0, 1, 2, 2, 3, 0]
         .iter()

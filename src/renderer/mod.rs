@@ -1,15 +1,14 @@
-pub mod atlas;
-pub mod buffer;
 mod cube;
-pub mod mesh;
 mod texture;
 mod ui;
+pub mod atlas;
+pub mod buffer;
+pub mod mesh;
 pub mod world;
 
 use self::{texture::Texture, ui::UIRenderer, world::WorldRenderer};
 use crate::{scene::Scene, ui::EguiInstance};
 use std::time::Duration;
-use vek::Vec3;
 use winit::window::Window;
 
 pub trait IRenderer {

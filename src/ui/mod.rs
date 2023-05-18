@@ -1,4 +1,4 @@
-use egui::{DragValue, Grid};
+use egui::DragValue;
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
 
