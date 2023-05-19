@@ -1,9 +1,9 @@
-mod cube;
-mod texture;
-mod ui;
 pub mod atlas;
 pub mod buffer;
+mod cube;
 pub mod mesh;
+mod texture;
+mod ui;
 pub mod world;
 
 use self::{texture::Texture, ui::UIRenderer, world::WorldRenderer};

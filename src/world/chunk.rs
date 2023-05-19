@@ -64,7 +64,7 @@ impl Chunk {
                     );
                     let quads = Quad::generate_block_quads(&block_in_chunk, translation);
                     let index = compute_1d(x, y, z);
-                    
+
                     blocks[index] = block_in_chunk;
 
                     // Do not render faces if the block is surrounded by air
