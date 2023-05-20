@@ -32,6 +32,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
+
     pub async fn new(winit_impl: &winit::window::Window) -> Self {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -120,6 +121,10 @@ impl Renderer {
             egui_render_pass,
             gui,
         }
+    }
+
+    pub fn toggle_wireframe(&mut self) {
+        self.world_renderer.wireframe = !self.world_renderer.wireframe;
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
