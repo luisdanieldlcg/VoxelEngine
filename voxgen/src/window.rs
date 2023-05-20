@@ -1,15 +1,32 @@
 use crate::renderer::Renderer;
 
+pub struct WindowSettings {
+    pub title: String,
+    pub size: (u32, u32),
+}
+
+impl Default for WindowSettings {
+    fn default() -> Self {
+        Self {
+            title: "VoxelEngine".to_string(),
+            size: (800, 600),
+        }
+    }
+}
+
 pub struct Window {
     winit_impl: winit::window::Window,
 }
 
 impl Window {
-    pub fn new() -> (Self, Renderer, winit::event_loop::EventLoop<()>) {
+    pub fn new(settings: WindowSettings) -> (Self, Renderer, winit::event_loop::EventLoop<()>) {
         let event_loop = winit::event_loop::EventLoop::new();
         let winit_impl = winit::window::WindowBuilder::new()
-            .with_title("VoxelEngine")
-            .with_inner_size(winit::dpi::LogicalSize::new(800, 600))
+            .with_title(settings.title)
+            .with_inner_size(winit::dpi::LogicalSize::new(
+                settings.size.0,
+                settings.size.1,
+            ))
             .build(&event_loop)
             .unwrap();
 

@@ -3,6 +3,6 @@ fn main() {
 }
 
 pub fn run() {
-    env_logger::init();
-    voxgen::core::init();
+    let settings = voxgen::window::WindowSettings::default();
+    voxgen::core::init(settings);
 }

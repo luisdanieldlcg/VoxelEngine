@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use log::info;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator, IntoParallelRefIterator};
 use vek::Vec3;
 
 use crate::{
@@ -7,7 +9,7 @@ use crate::{
     world::chunk::{Chunk, ChunkPos},
 };
 
-use super::{atlas::Atlas, pipelines::voxel::VoxelPipeline, Renderable};
+use super::{atlas::Atlas, pipelines::voxel::VoxelPipeline, Renderable, buffer::ChunkBuffer};
 
 pub const RENDER_DISTANCE: i32 = 4;
 
@@ -90,7 +92,9 @@ impl WorldRenderer {
         }
         if dirty {
             self.unload_chunks();
+            let instant = std::time::Instant::now();
             self.load_chunks(player_chunk_pos, device);
+            info!("Took {}ms to generate chunk", instant.elapsed().as_millis());
         }
     }
 
@@ -103,21 +107,27 @@ impl WorldRenderer {
         });
     }
     pub fn load_chunks(&mut self, player_pos: ChunkPos, device: &wgpu::Device) {
-        let start_x = player_pos.x - (RENDER_DISTANCE / 2);
-        let end_x = player_pos.x + (RENDER_DISTANCE / 2);
-        let start_z = player_pos.z - (RENDER_DISTANCE / 2);
-        let end_z = player_pos.z + (RENDER_DISTANCE / 2);
 
-        for z in start_z..=end_z {
-            for x in start_x..=end_x {
-                let chunk_pos = ChunkPos::new(x, z);
-                let pos = self.chunks_pos.get(&chunk_pos);
-                if pos.is_none() {
-                    self.chunks_pos.insert(chunk_pos.clone());
-                    self.chunks.push(Chunk::new(device, chunk_pos));
-                }
-            }
-        }
+        let distance = RENDER_DISTANCE / 2;
+        let start_x = player_pos.x - distance;
+        let end_x = player_pos.x + distance;
+        let start_z = player_pos.z - distance;
+        let end_z = player_pos.z + distance;
+    
+        let new_positions: Vec<ChunkPos> = (start_z..=end_z)
+            .into_par_iter()
+            .flat_map(|z| (start_x..=end_x).into_par_iter().map(move |x| ChunkPos::new(x, z)))
+            .filter(|chunk_pos| self.chunks_pos.get(chunk_pos).is_none())
+            .collect();
+    
+        let new_chunks: Vec<Chunk> = new_positions
+            .par_iter()
+            .map(|&chunk_pos| Chunk::new(device, chunk_pos))
+            .collect();
+    
+        self.chunks_pos.extend(new_positions);
+        self.chunks.extend(new_chunks);
+
     }
 
     pub fn load_initial_chunks(&mut self, device: &wgpu::Device, camera: &Camera) {

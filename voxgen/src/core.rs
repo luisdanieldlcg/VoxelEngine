@@ -1,8 +1,14 @@
-use crate::{engine::VoxelEngine, window::Window};
+use crate::{
+    engine::VoxelEngine,
+    window::{Window, WindowSettings},
+};
 use std::time::Instant;
 
-pub fn init() {
-    let (window, mut renderer, event_loop) = Window::new();
+pub fn init(settings: WindowSettings) {
+    std::env::set_var("RUST_LOG", "info, wgpu_core=error");
+    env_logger::init();
+
+    let (window, renderer, event_loop) = Window::new(settings);
     let mut engine = VoxelEngine {
         renderer,
         window,

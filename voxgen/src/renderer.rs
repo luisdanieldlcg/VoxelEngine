@@ -7,11 +7,13 @@ pub mod ui;
 pub mod vertex;
 pub mod world;
 
+pub use world::WorldRenderer;
+
 use std::time::Duration;
 
 use crate::{scene::Scene, ui::EguiInstance};
 
-use self::{texture::Texture, ui::UIRenderer, world::WorldRenderer};
+use self::{texture::Texture, ui::UIRenderer};
 
 trait Renderable {
     fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
