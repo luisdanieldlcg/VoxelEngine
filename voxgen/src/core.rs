@@ -1,6 +1,5 @@
 use std::time::Instant;
-
-use crate::{window::Window};
+use crate::window::Window;
 
 pub fn init() {
     let (window, mut renderer, event_loop) = Window::new();
@@ -11,10 +10,11 @@ pub fn init() {
 
         match event {
             winit::event::Event::MainEventsCleared => {
+                let scale_factor = window.scale_factor();
                 let dt = last_render_time.elapsed();
                 renderer.update(dt);
                 last_render_time = Instant::now();
-                renderer.render().unwrap();
+                renderer.render(scale_factor, dt.as_secs_f32()).unwrap();
             },
             winit::event::Event::WindowEvent { event, .. } => match event {
                 winit::event::WindowEvent::CloseRequested => {

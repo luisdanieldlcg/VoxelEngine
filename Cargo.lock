@@ -1551,6 +1551,9 @@ name = "voxgen"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "egui",
+ "egui_wgpu_backend",
+ "egui_winit_platform",
  "image",
  "pollster",
  "vek",

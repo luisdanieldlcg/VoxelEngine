@@ -1,9 +1,3 @@
-use std::time::Duration;
-
-use crate::scene::Scene;
-
-use self::{world::WorldRenderer, texture::Texture};
-
 pub mod atlas;
 pub mod texture;
 pub mod vertex;
@@ -11,6 +5,14 @@ pub mod quad;
 pub mod pipelines;
 pub mod world;
 pub mod buffer;
+pub mod ui;
+
+use std::time::Duration;
+
+use crate::{scene::Scene, ui::EguiInstance};
+
+use self::{world::WorldRenderer, texture::Texture, ui::UIRenderer};
+
 
 trait Renderable {
     fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
@@ -25,6 +27,8 @@ pub struct Renderer {
     world_renderer: WorldRenderer,
     scene: Scene,
     depth: Texture,
+    egui_render_pass: egui_wgpu_backend::RenderPass,
+    pub gui: EguiInstance,
 }
 
 impl Renderer {
@@ -101,7 +105,9 @@ impl Renderer {
 
         let scene = Scene::new(&device, size.width as f32, size.height as f32, &transform_bind_group_layout);
         let world_renderer = WorldRenderer::new(&scene.camera, &device, &queue,&shader, &config, &transform_bind_group_layout);
-
+        let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
+        let gui = EguiInstance::new(&winit_impl);
+        
         Self {
             surface,
             device,
@@ -111,6 +117,8 @@ impl Renderer {
             world_renderer,
             scene,
             depth,
+            egui_render_pass,
+            gui,
         }
     }
 
@@ -136,7 +144,7 @@ impl Renderer {
             .on_update(self.scene.camera_pos(), &self.device);
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, scale_factor: f32, dt: f32) -> Result<(), wgpu::SurfaceError> {
         let surface_texture = self.surface.get_current_texture()?;
         let view = surface_texture
             .texture
@@ -175,6 +183,9 @@ impl Renderer {
             render_pass.set_bind_group(1, &self.scene.transform_bind_group, &[]);
             self.world_renderer.render(&mut render_pass);
         }
+        let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt, self.scene.camera_pos());
+        ui_renderer.draw_egui(&surface_texture, scale_factor);
+
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();
         Ok(())

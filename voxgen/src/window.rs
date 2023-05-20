@@ -26,4 +26,7 @@ impl Window {
             .winit_impl
             .set_cursor_grab(winit::window::CursorGrabMode::Locked);
     }
+    pub fn scale_factor(&self) -> f32 {
+        self.winit_impl.scale_factor() as f32
+    }
 }
