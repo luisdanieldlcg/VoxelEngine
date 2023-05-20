@@ -1,5 +1,5 @@
+use crate::{engine::VoxelEngine, window::Window};
 use std::time::Instant;
-use crate::{window::Window, engine::VoxelEngine};
 
 pub fn init() {
     let (window, mut renderer, event_loop) = Window::new();
@@ -10,7 +10,7 @@ pub fn init() {
     };
     let mut last_render_time = Instant::now();
 
-    event_loop.run(move |event, _, flow|{
+    event_loop.run(move |event, _, flow| {
         engine.renderer_mut().gui.platform.handle_event(&event);
         if !engine.locked_input {
             engine.renderer_mut().input(&event);
@@ -26,13 +26,13 @@ pub fn init() {
                     Ok(_) => (),
                     Err(e) => eprintln!("{:?}", e),
                 }
-            },
+            }
             winit::event::Event::WindowEvent { event, .. } => match event {
-                winit::event::WindowEvent::KeyboardInput {  input, .. } => {
+                winit::event::WindowEvent::KeyboardInput { input, .. } => {
                     if input.state == winit::event::ElementState::Pressed {
                         engine.on_key_pressed(input.virtual_keycode);
                     }
-                },
+                }
                 winit::event::WindowEvent::CloseRequested => {
                     *flow = winit::event_loop::ControlFlow::Exit
                 }

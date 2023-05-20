@@ -1,7 +1,12 @@
 use std::{println, vec};
 
 use crate::{
-    block::BlockId, renderer::{buffer::{ChunkBuffer, compute_cube_indices}, quad::Quad, vertex::Vertex},
+    block::BlockId,
+    renderer::{
+        buffer::{compute_cube_indices, ChunkBuffer},
+        quad::Quad,
+        vertex::Vertex,
+    },
 };
 use vek::Vec3;
 

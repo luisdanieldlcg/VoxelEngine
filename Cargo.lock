@@ -768,9 +768,9 @@ dependencies = [
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.3.5"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e8776872cdc2f073ccaab02e336fa321328c1e02646ebcb9d2108d0baab480d"
+checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
 name = "lock_api"
@@ -1136,18 +1136,9 @@ checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 name = "playground"
 version = "0.1.0"
 dependencies = [
- "bytemuck",
- "egui",
- "egui_wgpu_backend",
- "egui_winit_platform",
  "env_logger",
- "image",
  "log",
- "pollster",
- "vek",
  "voxgen",
- "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -1279,9 +1270,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.15"
+version = "0.37.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0661814f891c57c930a610266415528da53c4933e6dea5fb350cbfe048a9ece"
+checksum = "acf8729d8542766f1b2cf77eb034d52f40d375bb8b615d0b147089946e16613d"
 dependencies = [
  "bitflags 1.3.2",
  "errno",

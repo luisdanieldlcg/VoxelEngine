@@ -2,9 +2,12 @@ use std::collections::HashSet;
 
 use vek::Vec3;
 
-use crate::{world::chunk::{ChunkPos, Chunk}, scene::camera::Camera};
+use crate::{
+    scene::camera::Camera,
+    world::chunk::{Chunk, ChunkPos},
+};
 
-use super::{pipelines::voxel::VoxelPipeline, Renderable, atlas::Atlas};
+use super::{atlas::Atlas, pipelines::voxel::VoxelPipeline, Renderable};
 
 pub const RENDER_DISTANCE: i32 = 4;
 

@@ -1,4 +1,4 @@
-use crate::{window::Window, renderer::Renderer};
+use crate::{renderer::Renderer, window::Window};
 
 pub struct VoxelEngine {
     pub(super) renderer: Renderer,
@@ -7,11 +7,10 @@ pub struct VoxelEngine {
 }
 
 impl VoxelEngine {
-    
     pub fn on_key_pressed(&mut self, input: Option<winit::event::VirtualKeyCode>) {
         if let Some(key) = input {
             match key {
-                winit::event::VirtualKeyCode::Escape =>   self.locked_input = !self.locked_input,
+                winit::event::VirtualKeyCode::Escape => self.locked_input = !self.locked_input,
                 winit::event::VirtualKeyCode::F12 => self.renderer.toggle_wireframe(),
                 _ => (),
             }

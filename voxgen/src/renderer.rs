@@ -1,18 +1,17 @@
 pub mod atlas;
-pub mod texture;
-pub mod vertex;
-pub mod quad;
-pub mod pipelines;
-pub mod world;
 pub mod buffer;
+pub mod pipelines;
+pub mod quad;
+pub mod texture;
 pub mod ui;
+pub mod vertex;
+pub mod world;
 
 use std::time::Duration;
 
 use crate::{scene::Scene, ui::EguiInstance};
 
-use self::{world::WorldRenderer, texture::Texture, ui::UIRenderer};
-
+use self::{texture::Texture, ui::UIRenderer, world::WorldRenderer};
 
 trait Renderable {
     fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
@@ -32,7 +31,6 @@ pub struct Renderer {
 }
 
 impl Renderer {
-
     pub async fn new(winit_impl: &winit::window::Window) -> Self {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -86,7 +84,8 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
+        let shader =
+            device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
 
         let transform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -104,11 +103,23 @@ impl Renderer {
             });
         let depth = Texture::with_depth(&config, &device);
 
-        let scene = Scene::new(&device, size.width as f32, size.height as f32, &transform_bind_group_layout);
-        let world_renderer = WorldRenderer::new(&scene.camera, &device, &queue,&shader, &config, &transform_bind_group_layout);
+        let scene = Scene::new(
+            &device,
+            size.width as f32,
+            size.height as f32,
+            &transform_bind_group_layout,
+        );
+        let world_renderer = WorldRenderer::new(
+            &scene.camera,
+            &device,
+            &queue,
+            &shader,
+            &config,
+            &transform_bind_group_layout,
+        );
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
         let gui = EguiInstance::new(&winit_impl);
-        
+
         Self {
             surface,
             device,
