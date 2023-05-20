@@ -1,4 +1,8 @@
-use self::{pipelines::voxel::VoxelPipeline, world::WorldRenderer};
+use std::time::Duration;
+
+use crate::scene::Scene;
+
+use self::{world::WorldRenderer, texture::Texture};
 
 pub mod atlas;
 pub mod texture;
@@ -6,6 +10,11 @@ pub mod vertex;
 pub mod quad;
 pub mod pipelines;
 pub mod world;
+pub mod buffer;
+
+trait Renderable {
+    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
+}
 
 pub struct Renderer {
     surface: wgpu::Surface,
@@ -14,6 +23,8 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     world_renderer: WorldRenderer,
+    scene: Scene,
+    depth: Texture,
 }
 
 impl Renderer {
@@ -70,12 +81,26 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
 
-        let shader =
-            device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
+        let transform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+        let depth = Texture::with_depth(&config, &device);
 
-
-        let world_renderer = WorldRenderer::new(&device, &shader, &config, &[]);
+        let scene = Scene::new(&device, size.width as f32, size.height as f32, &transform_bind_group_layout);
+        let world_renderer = WorldRenderer::new(&scene.camera, &device, &queue,&shader, &config, &transform_bind_group_layout);
 
         Self {
             surface,
@@ -84,7 +109,31 @@ impl Renderer {
             config,
             size,
             world_renderer,
+            scene,
+            depth,
         }
+    }
+
+    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        if new_size.width > 0 && new_size.height > 0 {
+            self.size = new_size;
+            self.config.width = new_size.width;
+            self.config.height = new_size.height;
+            self.surface.configure(&self.device, &self.config);
+            self.scene
+                .resize(new_size.width as f32, new_size.height as f32);
+            self.depth = Texture::with_depth(&self.config, &self.device);
+        }
+    }
+
+    pub fn input(&mut self, event: &winit::event::Event<()>) {
+        self.scene.handle_input_events(event);
+    }
+
+    pub fn update(&mut self, dt: Duration) {
+        self.scene.update_scene(&self.queue, dt);
+        self.world_renderer
+            .on_update(self.scene.camera_pos(), &self.device);
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -114,17 +163,17 @@ impl Renderer {
                         store: true,
                     },
                 })],
-                depth_stencil_attachment: None,
-                // depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                //     view: &self.depth_texture.view,
-                //     depth_ops: Some(wgpu::Operations {
-                //         load: wgpu::LoadOp::Clear(1.0),
-                //         store: true,
-                //     }),
-                //     stencil_ops: None,
-                // }),
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),
             });
-            // render_pass.set_pipeline(&self.voxel_pipeline.pipeline);
+            render_pass.set_bind_group(1, &self.scene.transform_bind_group, &[]);
+            self.world_renderer.render(&mut render_pass);
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         surface_texture.present();

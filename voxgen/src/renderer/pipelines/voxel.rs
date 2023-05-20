@@ -1,6 +1,5 @@
 use crate::renderer::{vertex::Vertex, texture::Texture};
 
-
 pub struct VoxelPipeline {
     pub pipeline: wgpu::RenderPipeline,
 }
@@ -14,14 +13,14 @@ impl VoxelPipeline {
         polygon_mode: wgpu::PolygonMode,
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Cube pipeline layout"),
+            label: Some("Voxel pipeline layout"),
             // Determines the order of our bind groups
             // for example, texture_bind_group_layout will be at group(0)
             bind_group_layouts: bg_layouts,
             push_constant_ranges: &[],
         });
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Cube pipeline"),
+            label: Some("Voxel pipeline"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: &shader,

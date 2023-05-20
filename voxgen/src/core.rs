@@ -1,16 +1,34 @@
-use crate::{engine::VoxelEngine, window::Window};
+use std::time::Instant;
+
+use crate::{window::Window};
 
 pub fn init() {
     let (window, mut renderer, event_loop) = Window::new();
+    let mut last_render_time = Instant::now();
 
-    event_loop.run(move |event, _, flow| match event {
-        winit::event::Event::MainEventsCleared => if let Ok(_) = renderer.render() {},
-        winit::event::Event::WindowEvent { event, .. } => match event {
-            winit::event::WindowEvent::CloseRequested => {
-                *flow = winit::event_loop::ControlFlow::Exit
-            }
+    event_loop.run(move |event, _, flow|{
+        renderer.input(&event);
+
+        match event {
+            winit::event::Event::MainEventsCleared => {
+                let dt = last_render_time.elapsed();
+                renderer.update(dt);
+                last_render_time = Instant::now();
+                renderer.render().unwrap();
+            },
+            winit::event::Event::WindowEvent { event, .. } => match event {
+                winit::event::WindowEvent::CloseRequested => {
+                    *flow = winit::event_loop::ControlFlow::Exit
+                }
+                winit::event::WindowEvent::Resized(size) => {
+                    renderer.resize(size);
+                }
+                winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                    renderer.resize(*new_inner_size);
+                }
+                _ => (),
+            },
             _ => (),
-        },
-        _ => (),
+        }
     });
 }
