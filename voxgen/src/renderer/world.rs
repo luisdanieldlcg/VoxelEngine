@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use log::info;
-use rayon::prelude::{IntoParallelIterator, ParallelIterator, IntoParallelRefIterator};
+use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use vek::Vec3;
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
     world::chunk::{Chunk, ChunkPos},
 };
 
-use super::{atlas::Atlas, pipelines::voxel::VoxelPipeline, Renderable, buffer::ChunkBuffer};
+use super::{atlas::Atlas, buffer::ChunkBuffer, pipelines::voxel::VoxelPipeline, Renderable};
 
 pub const RENDER_DISTANCE: i32 = 4;
 
@@ -107,27 +107,29 @@ impl WorldRenderer {
         });
     }
     pub fn load_chunks(&mut self, player_pos: ChunkPos, device: &wgpu::Device) {
-
         let distance = RENDER_DISTANCE / 2;
         let start_x = player_pos.x - distance;
         let end_x = player_pos.x + distance;
         let start_z = player_pos.z - distance;
         let end_z = player_pos.z + distance;
-    
+
         let new_positions: Vec<ChunkPos> = (start_z..=end_z)
             .into_par_iter()
-            .flat_map(|z| (start_x..=end_x).into_par_iter().map(move |x| ChunkPos::new(x, z)))
+            .flat_map(|z| {
+                (start_x..=end_x)
+                    .into_par_iter()
+                    .map(move |x| ChunkPos::new(x, z))
+            })
             .filter(|chunk_pos| self.chunks_pos.get(chunk_pos).is_none())
             .collect();
-    
+
         let new_chunks: Vec<Chunk> = new_positions
             .par_iter()
             .map(|&chunk_pos| Chunk::new(device, chunk_pos))
             .collect();
-    
+
         self.chunks_pos.extend(new_positions);
         self.chunks.extend(new_chunks);
-
     }
 
     pub fn load_initial_chunks(&mut self, device: &wgpu::Device, camera: &Camera) {

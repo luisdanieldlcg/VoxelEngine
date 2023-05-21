@@ -1,4 +1,6 @@
-use std::vec;
+
+
+use std::sync::Mutex;
 
 use crate::{
     block::BlockId,
@@ -9,6 +11,7 @@ use crate::{
     },
 };
 use log::info;
+
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use vek::Vec3;
 
@@ -28,7 +31,7 @@ pub struct Chunk {
 impl Chunk {
     pub fn new(device: &wgpu::Device, pos: ChunkPos) -> Self {
         let instant = std::time::Instant::now();
-        let (blocks, mesh) = Self::generate(&pos);
+        let (blocks, mesh) = Self::generate_mthread(pos);
         let elapsed = instant.elapsed();
 
         let buffer = ChunkBuffer::new(&device, &mesh.vertices, &mesh.indices, mesh.num_elements);
@@ -41,7 +44,63 @@ impl Chunk {
             loaded: true,
         }
     }
-  
+
+    pub fn generate_mthread(pos: ChunkPos) -> (Vec<BlockId>, ChunkMesh) {
+        let blocks = Mutex::new(vec![BlockId::AIR; TOTAL_CHUNK_SIZE]);
+        
+        let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
+
+        let verts = (0..CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH)
+            .into_par_iter()
+            .map(|index| {
+                let x = index % CHUNK_WIDTH;
+                let y = (index / CHUNK_WIDTH) % CHUNK_HEIGHT;
+                let z = (index / (CHUNK_WIDTH * CHUNK_HEIGHT)) % CHUNK_DEPTH;
+
+                let block_in_chunk = if y == CHUNK_HEIGHT - 1 {
+                    BlockId::GRASS
+                } else {
+                    BlockId::DIRT
+                };
+                // The position of the block in the chunk
+                let local_pos = Vec3::new(x as i32, y as i32, z as i32);
+                let world_pos = pos.to_world();
+                let translation = Vec3::new(
+                    local_pos.x + world_pos.x,
+                    local_pos.y,
+                    local_pos.z + world_pos.z,
+                );
+                let quads = Quad::generate_block_quads(&block_in_chunk, translation);
+                blocks.lock().unwrap()[index] = block_in_chunk;
+                (index, quads, local_pos)
+            })
+            .collect::<Vec<_>>();
+        let blocks = blocks.lock().unwrap();
+        // 44, 76
+        verts.iter()
+        .for_each(|quad| {
+            let (index, quads, local_pos) = quad;
+            quads.iter().for_each(|quad| {
+                let normal = quad.dir.normalized();
+                // The position of the neighbor block in chunk
+                let neighbor = local_pos + normal;
+                if !Chunk::is_pos_in_bounds(neighbor) {
+                    vertices.extend(quad.vertices);
+                    return;
+                }
+                let neighbor_block = blocks[*index].clone();
+                if neighbor_block.is_air() {
+                    vertices.extend(quad.vertices);
+                }
+            });
+        });
+        
+        let indices = compute_cube_indices(vertices.len());
+        (blocks.to_vec(), ChunkMesh::new(vertices, indices))
+    }
+
+    // 44 - 45ms on initial load
+    // 74 - 89ms on load
     pub fn generate(pos: &ChunkPos) -> (Vec<BlockId>, ChunkMesh) {
         let mut blocks = vec![BlockId::AIR; TOTAL_CHUNK_SIZE];
         let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
@@ -58,7 +117,7 @@ impl Chunk {
                     // The position of the block in the chunk
                     let local_pos = Vec3::new(x as i32, y as i32, z as i32);
                     let world_pos = pos.to_world();
-                                                                
+
                     // Translate position to the world space
                     let translation = Vec3::new(
                         local_pos.x + world_pos.x,
@@ -92,6 +151,7 @@ impl Chunk {
 
         (blocks, ChunkMesh::new(vertices, indices))
     }
+
     /// Checks if a given position is in bounds of the chunk
     pub fn is_pos_in_bounds(pos: Vec3<i32>) -> bool {
         if pos.x >= 0 && pos.y >= 0 && pos.z >= 0 {
