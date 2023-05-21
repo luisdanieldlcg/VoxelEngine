@@ -8,7 +8,9 @@ pub fn init(settings: WindowSettings) {
     std::env::set_var("RUST_LOG", "info, wgpu_core=error");
     env_logger::init();
 
-    let (window, renderer, event_loop) = Window::new(settings);
+    let (mut window, renderer, event_loop) = Window::new(settings);
+    window.grab_cursor(true);
+
     let mut engine = VoxelEngine {
         renderer,
         window,

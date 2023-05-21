@@ -11,6 +11,14 @@ pub enum Direction {
 }
 
 impl Direction {
+    pub const ALL: [Direction; 6] = [
+        Direction::Up,
+        Direction::Down,
+        Direction::Left,
+        Direction::Right,
+        Direction::Front,
+        Direction::Back,
+    ];
     pub fn normalized(self) -> Vec3<i32> {
         match self {
             Direction::Up => Vec3::unit_y(),

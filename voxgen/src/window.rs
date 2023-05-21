@@ -9,7 +9,7 @@ impl Default for WindowSettings {
     fn default() -> Self {
         Self {
             title: "VoxelEngine".to_string(),
-            size: (800, 600),
+            size: (1024, 768),
         }
     }
 }
@@ -38,10 +38,16 @@ impl Window {
 
     pub fn grab_cursor(&mut self, grab: bool) {
         self.winit_impl.set_cursor_visible(!grab);
-        // Do not crash if this fails
-        let _ = self
-            .winit_impl
-            .set_cursor_grab(winit::window::CursorGrabMode::Locked);
+        // Not unwrapping to avoid panicking
+        if grab {
+            let _ = self
+                .winit_impl
+                .set_cursor_grab(winit::window::CursorGrabMode::Locked);
+        } else {
+            let _ = self
+                .winit_impl
+                .set_cursor_grab(winit::window::CursorGrabMode::None);
+        }
     }
     pub fn scale_factor(&self) -> f32 {
         self.winit_impl.scale_factor() as f32

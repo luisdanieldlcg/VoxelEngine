@@ -1,6 +1,6 @@
 use vek::Vec3;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BlockId {
     AIR = 0,
     DIRT = 1,

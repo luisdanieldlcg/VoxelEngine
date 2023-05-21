@@ -10,7 +10,10 @@ impl VoxelEngine {
     pub fn on_key_pressed(&mut self, input: Option<winit::event::VirtualKeyCode>) {
         if let Some(key) = input {
             match key {
-                winit::event::VirtualKeyCode::Escape => self.locked_input = !self.locked_input,
+                winit::event::VirtualKeyCode::Escape => {
+                    self.locked_input = !self.locked_input;
+                    self.window.grab_cursor(!self.locked_input)
+                }
                 winit::event::VirtualKeyCode::F12 => self.renderer.toggle_wireframe(),
                 _ => (),
             }
