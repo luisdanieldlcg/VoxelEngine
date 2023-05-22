@@ -1,6 +1,7 @@
 pub mod block;
 pub mod core;
 pub mod direction;
+pub mod ecs;
 pub mod engine;
 pub mod renderer;
 pub mod scene;

@@ -1,4 +1,4 @@
-use std::{sync::Mutex, collections::HashSet};
+use std::{collections::HashSet, sync::Mutex};
 
 use crate::{
     block::BlockId,
@@ -29,9 +29,9 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    pub fn new(world: &WorldRenderer, device: &wgpu::Device, pos: ChunkPos) -> Self {
+    pub fn new(device: &wgpu::Device, pos: ChunkPos) -> Self {
         let instant = std::time::Instant::now();
-        let (blocks, mesh) = Self::generate(world, pos);
+        let (blocks, mesh) = Self::generate(pos);
         let elapsed = instant.elapsed();
         let buffer = ChunkBuffer::new(&device, &mesh.vertices, &mesh.indices, mesh.num_elements);
         info!("Took {}ms to generate chunk", elapsed.as_millis());
@@ -45,7 +45,7 @@ impl Chunk {
         }
     }
 
-    pub fn generate(world: &WorldRenderer, pos: ChunkPos) -> (Vec<BlockId>, ChunkMesh) {
+    pub fn generate(pos: ChunkPos) -> (Vec<BlockId>, ChunkMesh) {
         let mut blocks = [BlockId::DIRT; TOTAL_CHUNK_SIZE];
 
         let mut vertices = Vec::with_capacity(TOTAL_CHUNK_SIZE);
@@ -73,7 +73,7 @@ impl Chunk {
 
                 let mut visible_quads = Vec::new();
                 (Direction::ALL).iter().for_each(|dir| {
-                    let neighbor_pos = local_pos + dir.normalized();                    
+                    let neighbor_pos = local_pos + dir.normalized();
                     if !Chunk::is_pos_in_bounds(neighbor_pos) {
                         visible_quads.push(Quad::new(&block_in_chunk, *dir, translation));
                         return;
@@ -83,10 +83,9 @@ impl Chunk {
             })
             .collect::<Vec<_>>();
 
-        
         verts.iter().for_each(|quad| {
             let (index, visible_quads, block) = quad;
-            visible_quads.iter().for_each(|quad| {            
+            visible_quads.iter().for_each(|quad| {
                 blocks[*index] = *block;
                 vertices.extend(quad.vertices);
             });
