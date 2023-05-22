@@ -3,8 +3,8 @@ use crate::{
     direction::Direction,
     renderer::{
         buffer::{compute_cube_indices, ChunkBuffer},
-        quad::Quad,
-        vertex::Vertex,
+        mesh::quad::Quad,
+        mesh::vertex::Vertex,
     },
 };
 

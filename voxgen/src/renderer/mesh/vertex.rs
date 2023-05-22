@@ -1,8 +1,6 @@
 use vek::Vec3;
 
-use crate::{block::BlockId, direction::Direction};
-
-use super::atlas::{atlas_uv_mapping, TextureId};
+use crate::{block::BlockId, direction::Direction, renderer::atlas::{atlas_uv_mapping, TextureId}};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

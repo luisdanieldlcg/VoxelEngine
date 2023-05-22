@@ -1,4 +1,4 @@
-use bevy_ecs::{schedule::Schedule, world::World};
+use bevy_ecs::world::World;
 
 use crate::{
     engine::VoxelEngine,

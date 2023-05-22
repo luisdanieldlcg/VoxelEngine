@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::world::chunk::ChunkMesh;
 
-use super::vertex::Vertex;
+use super::mesh::vertex::Vertex;
 
 pub struct ChunkBuffer {
     pub vertex_buf: Buffer<Vertex>,

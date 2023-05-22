@@ -2,11 +2,10 @@ pub mod atlas;
 pub mod buffer;
 pub mod debug;
 pub mod pipelines;
-pub mod quad;
 pub mod texture;
 pub mod ui;
-pub mod vertex;
 pub mod world;
+pub mod mesh;
 
 pub use world::WorldRenderer;
 
@@ -17,7 +16,7 @@ use crate::{scene::Scene, ui::EguiInstance};
 use self::{debug::DebugRenderer, texture::Texture, ui::UIRenderer};
 
 trait Renderable {
-    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
+    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, global_uniforms: &'a wgpu::BindGroup);
 }
 
 pub struct Renderer {
@@ -198,10 +197,8 @@ impl Renderer {
                     stencil_ops: None,
                 }),
             });
-            render_pass.set_bind_group(1, &self.scene.transform_bind_group, &[]);
-            self.world_renderer.render(&mut render_pass);
-            render_pass.set_bind_group(0, &self.scene.transform_bind_group, &[]);
-            self.debug_renderer.render(&mut render_pass);
+            self.world_renderer.render(&mut render_pass, &self.scene.transform_bind_group);
+            self.debug_renderer.render(&mut render_pass, &self.scene.transform_bind_group);
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt, self.scene.camera_pos());
         ui_renderer.draw_egui(&surface_texture, scale_factor);

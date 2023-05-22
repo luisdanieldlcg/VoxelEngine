@@ -1,6 +1,6 @@
 use wgpu::BindGroupLayout;
 
-use crate::renderer::{debug::LineVertex, texture::Texture};
+use crate::renderer::{mesh::line::LineVertex, texture::Texture};
 
 pub struct DebugPipeline {
     pub pipeline: wgpu::RenderPipeline,

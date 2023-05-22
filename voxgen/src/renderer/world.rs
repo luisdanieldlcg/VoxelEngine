@@ -19,13 +19,16 @@ pub struct WorldRenderer {
 }
 
 impl Renderable for WorldRenderer {
-    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, global_uniforms: &'a wgpu::BindGroup) {
+
         if self.wireframe {
             render_pass.set_pipeline(&self.pipeline_wireframe.pipeline);
         } else {
             render_pass.set_pipeline(&self.pipeline.pipeline);
         }
+
         render_pass.set_bind_group(0, &self.atlas.bind_group, &[]);
+        render_pass.set_bind_group(1, global_uniforms, &[]);
 
         for chunk in self.chunk_manager.chunks() {
             render_pass.set_vertex_buffer(0, chunk.buffer.vertex_buf.buf.slice(..));
