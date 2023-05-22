@@ -1,5 +1,3 @@
-use std::{collections::HashSet, sync::Mutex};
-
 use crate::{
     block::BlockId,
     direction::Direction,
@@ -7,7 +5,6 @@ use crate::{
         buffer::{compute_cube_indices, ChunkBuffer},
         quad::Quad,
         vertex::Vertex,
-        WorldRenderer,
     },
 };
 

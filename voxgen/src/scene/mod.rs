@@ -70,7 +70,7 @@ impl Scene {
         }
     }
 
-    pub fn update_scene(&mut self, queue: &wgpu::Queue, delta_time: Duration) {
+    pub fn tick(&mut self, queue: &wgpu::Queue, delta_time: Duration) {
         self.camera_controller.update(&mut self.camera, delta_time);
         self.camera_uniform.update(&self.camera);
         self.uniform_buf.update(queue, &[self.camera_uniform], 0);

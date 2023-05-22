@@ -1,9 +1,12 @@
+use bevy_ecs::world::World;
+
 use crate::{renderer::Renderer, window::Window};
 
 pub struct VoxelEngine {
     pub(super) renderer: Renderer,
     pub window: Window,
     pub locked_input: bool,
+    pub world: World,
 }
 
 impl VoxelEngine {
@@ -19,6 +22,7 @@ impl VoxelEngine {
             }
         }
     }
+
     pub fn renderer(&self) -> &Renderer {
         &self.renderer
     }

@@ -1,3 +1,5 @@
+use bevy_ecs::{schedule::Schedule, world::World};
+
 use crate::{
     engine::VoxelEngine,
     window::{Window, WindowSettings},
@@ -15,7 +17,11 @@ pub fn init(settings: WindowSettings) {
         renderer,
         window,
         locked_input: false,
+        world: World::default(),
     };
+
+    // let schedule = Schedule::default();
+
     let mut last_render_time = Instant::now();
 
     event_loop.run(move |event, _, flow| {

@@ -1,4 +1,3 @@
-
 struct VertexIn {
     @location(0) vertex_pos: vec3<f32>,
     @location(1) texture_pos: vec2<f32>,

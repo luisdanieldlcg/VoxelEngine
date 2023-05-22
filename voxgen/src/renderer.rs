@@ -1,5 +1,6 @@
 pub mod atlas;
 pub mod buffer;
+pub mod debug;
 pub mod pipelines;
 pub mod quad;
 pub mod texture;
@@ -13,7 +14,7 @@ use std::time::Duration;
 
 use crate::{scene::Scene, ui::EguiInstance};
 
-use self::{texture::Texture, ui::UIRenderer};
+use self::{debug::DebugRenderer, texture::Texture, ui::UIRenderer};
 
 trait Renderable {
     fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>);
@@ -26,6 +27,7 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     world_renderer: WorldRenderer,
+    debug_renderer: DebugRenderer,
     scene: Scene,
     depth: Texture,
     egui_render_pass: egui_wgpu_backend::RenderPass,
@@ -86,9 +88,6 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
-        let shader =
-            device.create_shader_module(wgpu::include_wgsl!("../../assets/shaders/vertex.wgsl"));
-
         let transform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -115,10 +114,10 @@ impl Renderer {
             &scene.camera,
             &device,
             &queue,
-            &shader,
             &config,
             &transform_bind_group_layout,
         );
+        let debug_renderer = DebugRenderer::new(&device, &config, &transform_bind_group_layout);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
         let gui = EguiInstance::new(&winit_impl);
 
@@ -133,6 +132,7 @@ impl Renderer {
             depth,
             egui_render_pass,
             gui,
+            debug_renderer,
         }
     }
 
@@ -157,9 +157,9 @@ impl Renderer {
     }
 
     pub fn update(&mut self, dt: Duration) {
-        self.scene.update_scene(&self.queue, dt);
+        self.scene.tick(&self.queue, dt);
         self.world_renderer
-            .on_update(self.scene.camera_pos(), &self.device);
+            .tick(self.scene.camera_pos(), &self.device);
     }
 
     pub fn render(&mut self, scale_factor: f32, dt: f32) -> Result<(), wgpu::SurfaceError> {
@@ -200,6 +200,8 @@ impl Renderer {
             });
             render_pass.set_bind_group(1, &self.scene.transform_bind_group, &[]);
             self.world_renderer.render(&mut render_pass);
+            render_pass.set_bind_group(0, &self.scene.transform_bind_group, &[]);
+            self.debug_renderer.render(&mut render_pass);
         }
         let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt, self.scene.camera_pos());
         ui_renderer.draw_egui(&surface_texture, scale_factor);

@@ -1,11 +1,10 @@
-use log::info;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use vek::Vec3;
-
 use crate::{
     scene::camera::Camera,
     world::{chunk::ChunkPos, chunk_manager::ChunkManager},
 };
+use log::info;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use vek::Vec3;
 
 use super::{atlas::Atlas, pipelines::voxel::VoxelPipeline, Renderable};
 
@@ -44,15 +43,16 @@ impl WorldRenderer {
         camera: &Camera,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        shader: &wgpu::ShaderModule,
         cfg: &wgpu::SurfaceConfiguration,
         transform_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> Self {
+        let shader =
+            device.create_shader_module(wgpu::include_wgsl!("../../../assets/shaders/cube.wgsl"));
         let texture_atlas = include_bytes!("../../../assets/atlas.png");
         let atlas = Atlas::new(texture_atlas, &device, &queue);
         let pipeline = VoxelPipeline::new(
             device,
-            shader,
+            &shader,
             cfg,
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Fill,
@@ -60,7 +60,7 @@ impl WorldRenderer {
 
         let pipeline_wireframe = VoxelPipeline::new(
             device,
-            shader,
+            &shader,
             cfg,
             &[&atlas.bind_group_layout, &transform_bind_group_layout],
             wgpu::PolygonMode::Line,
@@ -85,7 +85,7 @@ impl WorldRenderer {
         world
     }
 
-    pub fn on_update(&mut self, player_pos: Vec3<f32>, device: &wgpu::Device) {
+    pub fn tick(&mut self, player_pos: Vec3<f32>, device: &wgpu::Device) {
         let player_chunk_pos = ChunkPos::from_world(player_pos);
         self.chunk_manager.tick(player_chunk_pos, device);
     }
