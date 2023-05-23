@@ -2,17 +2,15 @@ pub mod camera;
 
 use std::time::Duration;
 
-use crate::renderer::buffer::Buffer;
+use crate::renderer::{buffer::Buffer, Renderer};
+use bevy_ecs::world::World;
 use vek::Vec3;
 
 use self::camera::{Camera, CameraController, CameraUniform};
 
 pub struct Scene {
     pub camera: Camera,
-    camera_uniform: CameraUniform,
-    uniform_buf: Buffer<CameraUniform>,
     pub camera_controller: camera::CameraController,
-    pub transform_bind_group: wgpu::BindGroup,
 }
 
 impl Scene {
@@ -20,37 +18,13 @@ impl Scene {
         self.camera.pos
     }
 
-    pub fn new(
-        device: &wgpu::Device,
-        window_width: f32,
-        window_height: f32,
-        transform_bind_group_layout: &wgpu::BindGroupLayout,
-    ) -> Self {
+    pub fn new(renderer: &Renderer, window_width: f32, window_height: f32) -> Self {
         let camera = Camera::new(window_width, window_height);
-        let mut camera_uniform: CameraUniform = CameraUniform::empty();
-        camera_uniform.update(&camera);
 
-        let transform_buffer = Buffer::new(
-            &device,
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            &[camera_uniform],
-        );
-
-        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
-            layout: &transform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: transform_buffer.buf.as_entire_binding(),
-            }],
-        });
         let camera_controller = CameraController::new();
         Self {
             camera,
-            camera_uniform,
-            uniform_buf: transform_buffer,
             camera_controller,
-            transform_bind_group,
         }
     }
 
@@ -72,8 +46,7 @@ impl Scene {
 
     pub fn tick(&mut self, queue: &wgpu::Queue, delta_time: Duration) {
         self.camera_controller.update(&mut self.camera, delta_time);
-        self.camera_uniform.update(&self.camera);
-        self.uniform_buf.update(queue, &[self.camera_uniform], 0);
+
     }
 
     pub fn resize(&mut self, width: f32, height: f32) {

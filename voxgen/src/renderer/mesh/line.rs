@@ -1,3 +1,4 @@
+use egui::plot::Line;
 use vek::Vec3;
 
 #[repr(C)]
@@ -18,7 +19,7 @@ impl LineVertex {
         }
     }
 
-    pub fn draw_line(at: Vec3<i32>, color: [f32; 3]) -> Self {
+    pub fn new(at: Vec3<i32>, color: [f32; 3]) -> Self {
         Self {
             pos: [at.x as f32, at.y as f32, at.z as f32],
             color,
@@ -26,32 +27,26 @@ impl LineVertex {
     }
 }
 
-
-
-fn coordinate_vertex(pos: [i8; 3], c: [u8; 3]) -> LineVertex {
-    LineVertex {
-        pos: [pos[0] as f32, pos[1] as f32 + 256.0, pos[2] as f32],
-        color: [c[0] as f32 / 255.0, c[1] as f32 / 255.0, c[2] as f32 / 255.0],
-    }
-}
-pub fn create_vertices() -> (Vec<LineVertex>, Vec<u16>) {
-    let vertex_data = [
-        // z
-        coordinate_vertex([0, 0, 0], [0, 0, 255]),
-        coordinate_vertex([0, 0, 2], [0, 0, 255]),
-        // x
-        coordinate_vertex([0, 0, 0], [255, 0, 0]),
-        coordinate_vertex([2, 0, 0], [255, 0, 0]),
-        // y
-        coordinate_vertex([0, 0, 0], [0, 255, 0]),
-        coordinate_vertex([0, 2, 0], [0, 255, 0]),
+pub fn create_lines() -> (Vec<LineVertex>, Vec<u16>) {
+    let color = [1.0, 0.1, 0.1];
+    const UNIT: i32 = 1;
+    let mut data = [
+        // X
+        LineVertex::new(Vec3::new(0, 0, 0), color),
+        LineVertex::new(Vec3::new(UNIT, 0, 0), color),
+        // Y
+        LineVertex::new(Vec3::new(0, 0, 0), color),
+        LineVertex::new(Vec3::new(0, UNIT, 0), color),
+        // Z
+        LineVertex::new(Vec3::new(0, 0, 0), color),
+        LineVertex::new(Vec3::new(0, 0, UNIT), color),
     ];
-
+    data.iter_mut().for_each(|v| v.pos[1] += 256.0);
     let index_data: &[u16] = &[
         0, 1, //z
         2, 3, //x
         4, 5, //y
     ];
 
-    (vertex_data.to_vec(), index_data.to_vec())
+    (data.to_vec(), index_data.to_vec())
 }

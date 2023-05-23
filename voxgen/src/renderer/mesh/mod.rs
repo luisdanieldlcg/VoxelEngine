@@ -1,3 +1,3 @@
-pub mod vertex;
-pub mod quad;
 pub mod line;
+pub mod quad;
+pub mod vertex;

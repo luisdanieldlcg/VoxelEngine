@@ -1,22 +1,31 @@
 pub mod atlas;
 pub mod buffer;
 pub mod debug;
+pub mod mesh;
 pub mod pipelines;
 pub mod texture;
 pub mod ui;
 pub mod world;
-pub mod mesh;
 
+use bevy_ecs::world::World;
+use vek::Vec3;
 pub use world::WorldRenderer;
 
 use std::time::Duration;
 
-use crate::{scene::Scene, ui::EguiInstance};
+use crate::{
+    scene::{camera::{Camera, CameraUniform}, Scene},
+    ui::EguiInstance,
+};
 
-use self::{debug::DebugRenderer, texture::Texture, ui::UIRenderer};
+use self::{buffer::Buffer, debug::DebugRenderer, texture::Texture, ui::UIRenderer};
 
 trait Renderable {
-    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, global_uniforms: &'a wgpu::BindGroup);
+    fn render<'a>(
+        &'a self,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        global_uniforms: &'a wgpu::BindGroup,
+    );
 }
 
 pub struct Renderer {
@@ -27,8 +36,10 @@ pub struct Renderer {
     size: winit::dpi::PhysicalSize<u32>,
     world_renderer: WorldRenderer,
     debug_renderer: DebugRenderer,
-    scene: Scene,
     depth: Texture,
+    camera_uniform: CameraUniform,
+    camera_bind_group: wgpu::BindGroup,
+    camera_buffer: Buffer<CameraUniform>,
     egui_render_pass: egui_wgpu_backend::RenderPass,
     pub gui: EguiInstance,
 }
@@ -103,19 +114,24 @@ impl Renderer {
             });
         let depth = Texture::with_depth(&config, &device);
 
-        let scene = Scene::new(
+        let camera_uniform = CameraUniform::empty();
+
+        let transform_buffer = Buffer::new(
             &device,
-            size.width as f32,
-            size.height as f32,
-            &transform_bind_group_layout,
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            &[camera_uniform],
         );
-        let world_renderer = WorldRenderer::new(
-            &scene.camera,
-            &device,
-            &queue,
-            &config,
-            &transform_bind_group_layout,
-        );
+
+        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &transform_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: transform_buffer.buf.as_entire_binding(),
+            }],
+        });
+        let world_renderer =
+            WorldRenderer::new(&device, &queue, &config, &transform_bind_group_layout);
         let debug_renderer = DebugRenderer::new(&device, &config, &transform_bind_group_layout);
         let egui_render_pass = egui_wgpu_backend::RenderPass::new(&device, surface_format, 1);
         let gui = EguiInstance::new(&winit_impl);
@@ -127,8 +143,10 @@ impl Renderer {
             config,
             size,
             world_renderer,
-            scene,
             depth,
+            camera_bind_group: transform_bind_group,
+            camera_buffer: transform_buffer,
+            camera_uniform,
             egui_render_pass,
             gui,
             debug_renderer,
@@ -139,26 +157,25 @@ impl Renderer {
         self.world_renderer.wireframe = !self.world_renderer.wireframe;
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    pub fn resize(&mut self, scene: &mut Scene,  new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.scene
-                .resize(new_size.width as f32, new_size.height as f32);
             self.depth = Texture::with_depth(&self.config, &self.device);
+            scene.resize(new_size.width as f32, new_size.height as f32);
         }
     }
 
-    pub fn input(&mut self, event: &winit::event::Event<()>) {
-        self.scene.handle_input_events(event);
+    pub fn input(&mut self, _: &winit::event::Event<()>) {
     }
 
-    pub fn update(&mut self, dt: Duration) {
-        self.scene.tick(&self.queue, dt);
-        self.world_renderer
-            .tick(self.scene.camera_pos(), &self.device);
+    pub fn update(&mut self, scene: &mut Scene, dt: Duration) {
+        scene.tick(&self.queue, dt);
+        self.camera_uniform.update(&scene.camera);
+        self.camera_buffer.update(&self.queue, &[self.camera_uniform], 0);
+        self.world_renderer.tick(Vec3::zero(), &self.device);
     }
 
     pub fn render(&mut self, scale_factor: f32, dt: f32) -> Result<(), wgpu::SurfaceError> {
@@ -197,10 +214,12 @@ impl Renderer {
                     stencil_ops: None,
                 }),
             });
-            self.world_renderer.render(&mut render_pass, &self.scene.transform_bind_group);
-            self.debug_renderer.render(&mut render_pass, &self.scene.transform_bind_group);
+            self.world_renderer
+                .render(&mut render_pass, &self.camera_bind_group);
+            self.debug_renderer
+                .render(&mut render_pass, &self.camera_bind_group);
         }
-        let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt, self.scene.camera_pos());
+        let mut ui_renderer = UIRenderer::new(&mut encoder, self, dt, Vec3::zero());
         ui_renderer.draw_egui(&surface_texture, scale_factor);
 
         self.queue.submit(std::iter::once(encoder.finish()));

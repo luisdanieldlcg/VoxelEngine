@@ -9,8 +9,7 @@ pub struct BoxCollider;
 
 #[derive(Component)]
 pub struct Transform {
-    pos: Vec3<i32>,
-    scale: Vec3<i32>,
+    pub pos: Vec3<i32>,
 }
 
 fn update_physics(q: Query<(&RigidBody, &BoxCollider, &Transform)>, dt: f32) {

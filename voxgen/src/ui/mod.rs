@@ -1,8 +1,5 @@
-use egui::DragValue;
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use vek::Vec3;
-
-use crate::scene::camera::CameraController;
 
 pub struct EguiInstance {
     pub platform: Platform,
@@ -47,7 +44,7 @@ pub fn draw_debugging_settings(platform: &mut Platform, dt: f32, wireframe: &mut
 
 pub fn draw_camera_settings(
     platform: &mut Platform,
-    controller: &mut CameraController,
+    // controller: &mut CameraController,
     pos: Vec3<f32>,
 ) {
     egui::Window::new("Camera Settings")
@@ -55,13 +52,13 @@ pub fn draw_camera_settings(
         .collapsible(true)
         .title_bar(true)
         .show(&platform.context(), |ui| {
-            ui.label("Speed");
-            ui.add(DragValue::new(&mut controller.speed));
-            ui.separator();
+            // ui.label("Speed");
+            // ui.add(DragValue::new(&mut controller.speed));
+            // ui.separator();
 
-            ui.label("Sensitivity");
-            ui.add(DragValue::new(&mut controller.sensitivity));
-            ui.separator();
+            // ui.label("Sensitivity");
+            // ui.add(DragValue::new(&mut controller.sensitivity));
+            // ui.separator();
 
             ui.label("Position [X Y Z]");
             ui.label(format!("[{:.2} {:.2} {:.2}]", pos.x, pos.y, pos.z,));

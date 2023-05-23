@@ -2,6 +2,7 @@ use bevy_ecs::world::World;
 
 use crate::{
     engine::VoxelEngine,
+    scene::Scene,
     window::{Window, WindowSettings},
 };
 use std::time::Instant;
@@ -12,6 +13,7 @@ pub fn init(settings: WindowSettings) {
 
     let (mut window, renderer, event_loop) = Window::new(settings);
     window.grab_cursor(true);
+    let size = window.size();
 
     let mut engine = VoxelEngine {
         renderer,
@@ -19,22 +21,22 @@ pub fn init(settings: WindowSettings) {
         locked_input: false,
         world: World::default(),
     };
-
-    // let schedule = Schedule::default();
-
+    engine.setup_ecs();
+    let mut scene = Scene::new(&engine.renderer, size.0 as f32, size.1 as f32);
     let mut last_render_time = Instant::now();
 
     event_loop.run(move |event, _, flow| {
         engine.renderer_mut().gui.platform.handle_event(&event);
         if !engine.locked_input {
-            engine.renderer_mut().input(&event);
+            scene.handle_input_events(&event);
+            engine.renderer_mut().input(&event);   
         }
 
         match event {
             winit::event::Event::MainEventsCleared => {
                 let scale_factor = engine.window.scale_factor();
                 let dt = last_render_time.elapsed();
-                engine.renderer_mut().update(dt);
+                engine.renderer_mut().update(&mut scene, dt);
                 last_render_time = Instant::now();
                 match engine.renderer_mut().render(scale_factor, dt.as_secs_f32()) {
                     Ok(_) => (),
@@ -51,10 +53,10 @@ pub fn init(settings: WindowSettings) {
                     *flow = winit::event_loop::ControlFlow::Exit
                 }
                 winit::event::WindowEvent::Resized(size) => {
-                    engine.renderer_mut().resize(size);
+                    engine.renderer_mut().resize(&mut scene, size);
                 }
                 winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    engine.renderer_mut().resize(*new_inner_size);
+                    engine.renderer_mut().resize(&mut scene, *new_inner_size);
                 }
                 _ => (),
             },

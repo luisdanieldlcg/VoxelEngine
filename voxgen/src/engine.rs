@@ -1,6 +1,7 @@
-use bevy_ecs::world::World;
+use bevy_ecs::{schedule::Schedule, system::Commands, world::World};
+use vek::Vec3;
 
-use crate::{renderer::Renderer, window::Window};
+use crate::{ecs::Transform, renderer::Renderer, window::Window};
 
 pub struct VoxelEngine {
     pub(super) renderer: Renderer,
@@ -23,10 +24,20 @@ impl VoxelEngine {
         }
     }
 
+    pub fn setup_ecs(&mut self) {
+        let mut schedule = Schedule::default();
+        schedule.add_system(init_transform);
+        schedule.run(&mut self.world);
+    }
+
     pub fn renderer(&self) -> &Renderer {
         &self.renderer
     }
     pub fn renderer_mut(&mut self) -> &mut Renderer {
         &mut self.renderer
     }
+}
+
+fn init_transform(mut commands: Commands) {
+    commands.spawn(Transform { pos: Vec3::zero() });
 }

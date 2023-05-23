@@ -19,8 +19,11 @@ pub struct WorldRenderer {
 }
 
 impl Renderable for WorldRenderer {
-    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, global_uniforms: &'a wgpu::BindGroup) {
-
+    fn render<'a>(
+        &'a self,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        global_uniforms: &'a wgpu::BindGroup,
+    ) {
         if self.wireframe {
             render_pass.set_pipeline(&self.pipeline_wireframe.pipeline);
         } else {
@@ -43,7 +46,7 @@ impl Renderable for WorldRenderer {
 
 impl WorldRenderer {
     pub fn new(
-        camera: &Camera,
+        // camera: &Camera,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         cfg: &wgpu::SurfaceConfiguration,
@@ -77,7 +80,7 @@ impl WorldRenderer {
         };
         world
             .chunk_manager
-            .load_chunks(ChunkPos::from_world(camera.pos), device);
+            .load_chunks(ChunkPos::from_world(Vec3::zero()), device);
         let v_count = world
             .chunk_manager
             .chunks()

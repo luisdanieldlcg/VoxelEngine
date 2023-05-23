@@ -1,8 +1,16 @@
-use super::{buffer::Buffer, mesh::line::{LineVertex, create_vertices}, pipelines::debug::DebugPipeline, Renderable};
-
+use super::{
+    buffer::Buffer,
+    mesh::line::{create_lines, LineVertex},
+    pipelines::debug::DebugPipeline,
+    Renderable,
+};
 
 impl Renderable for DebugRenderer {
-    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, global_uniforms: &'a wgpu::BindGroup) {
+    fn render<'a>(
+        &'a self,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        global_uniforms: &'a wgpu::BindGroup,
+    ) {
         render_pass.set_pipeline(&self.pipeline.pipeline);
         render_pass.set_bind_group(0, global_uniforms, &[]);
         render_pass.set_vertex_buffer(0, self.buffer.buf.slice(..));
@@ -24,7 +32,7 @@ impl DebugRenderer {
         sfc: &wgpu::SurfaceConfiguration,
         transform_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> Self {
-        let data = create_vertices();
+        let data = create_lines();
         let pipeline = DebugPipeline::new(device, &sfc, &[transform_bind_group_layout]);
 
         let buffer = Buffer::new(
@@ -37,6 +45,11 @@ impl DebugRenderer {
             wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             &data.1,
         );
-        Self { buffer, pipeline, indices, num_indices: data.1.len() }
+        Self {
+            buffer,
+            pipeline,
+            indices,
+            num_indices: data.1.len(),
+        }
     }
 }

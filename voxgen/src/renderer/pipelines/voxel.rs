@@ -1,4 +1,4 @@
-use crate::renderer::{texture::Texture, mesh::vertex::Vertex};
+use crate::renderer::{mesh::vertex::Vertex, texture::Texture};
 
 pub struct VoxelPipeline {
     pub pipeline: wgpu::RenderPipeline,

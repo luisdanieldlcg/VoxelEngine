@@ -52,4 +52,8 @@ impl Window {
     pub fn scale_factor(&self) -> f32 {
         self.winit_impl.scale_factor() as f32
     }
+
+    pub fn size(&self) -> (u32, u32) {
+        self.winit_impl.inner_size().into()
+    }
 }
