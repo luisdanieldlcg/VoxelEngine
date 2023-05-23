@@ -1,5 +1,3 @@
-use bevy_ecs::world::World;
-
 use crate::{
     engine::VoxelEngine,
     scene::Scene,
@@ -19,9 +17,7 @@ pub fn init(settings: WindowSettings) {
         renderer,
         window,
         locked_input: false,
-        world: World::default(),
     };
-    engine.setup_ecs();
     let mut scene = Scene::new(&engine.renderer, size.0 as f32, size.1 as f32);
     let mut last_render_time = Instant::now();
 
@@ -29,18 +25,19 @@ pub fn init(settings: WindowSettings) {
         engine.renderer_mut().gui.platform.handle_event(&event);
         if !engine.locked_input {
             scene.handle_input_events(&event);
-            engine.renderer_mut().input(&event);   
+            engine.renderer_mut().input(&event);
         }
 
         match event {
             winit::event::Event::MainEventsCleared => {
                 let scale_factor = engine.window.scale_factor();
                 let dt = last_render_time.elapsed();
-                engine.renderer_mut().update(&mut scene, dt);
+                engine.renderer_mut().update(&scene);
+                scene.update(dt);
                 last_render_time = Instant::now();
                 match engine.renderer_mut().render(scale_factor, dt.as_secs_f32()) {
                     Ok(_) => (),
-                    Err(e) => eprintln!("{:?}", e),
+                    Err(e) => log::error!("Rendering Errorl: {:?}", e),
                 }
             }
             winit::event::Event::WindowEvent { event, .. } => match event {

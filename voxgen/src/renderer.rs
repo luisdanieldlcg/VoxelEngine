@@ -7,14 +7,16 @@ pub mod texture;
 pub mod ui;
 pub mod world;
 
-use bevy_ecs::world::World;
 use vek::Vec3;
 pub use world::WorldRenderer;
 
 use std::time::Duration;
 
 use crate::{
-    scene::{camera::{Camera, CameraUniform}, Scene},
+    scene::{
+        camera::{Camera, CameraUniform},
+        Scene,
+    },
     ui::EguiInstance,
 };
 
@@ -157,7 +159,7 @@ impl Renderer {
         self.world_renderer.wireframe = !self.world_renderer.wireframe;
     }
 
-    pub fn resize(&mut self, scene: &mut Scene,  new_size: winit::dpi::PhysicalSize<u32>) {
+    pub fn resize(&mut self, scene: &mut Scene, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
@@ -168,13 +170,12 @@ impl Renderer {
         }
     }
 
-    pub fn input(&mut self, _: &winit::event::Event<()>) {
-    }
+    pub fn input(&mut self, _: &winit::event::Event<()>) {}
 
-    pub fn update(&mut self, scene: &mut Scene, dt: Duration) {
-        scene.tick(&self.queue, dt);
+    pub fn update(&mut self, scene: &Scene) {
         self.camera_uniform.update(&scene.camera);
-        self.camera_buffer.update(&self.queue, &[self.camera_uniform], 0);
+        self.camera_buffer
+            .update(&self.queue, &[self.camera_uniform], 0);
         self.world_renderer.tick(Vec3::zero(), &self.device);
     }
 

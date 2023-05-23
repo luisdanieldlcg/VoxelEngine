@@ -2,15 +2,16 @@ pub mod camera;
 
 use std::time::Duration;
 
-use crate::renderer::{buffer::Buffer, Renderer};
-use bevy_ecs::world::World;
+use crate::{ecs::Transform, renderer::Renderer};
+use bevy_ecs::{schedule::Schedule, system::Commands};
 use vek::Vec3;
 
-use self::camera::{Camera, CameraController, CameraUniform};
+use self::camera::{Camera, CameraController};
 
 pub struct Scene {
     pub camera: Camera,
     pub camera_controller: camera::CameraController,
+    pub world: bevy_ecs::world::World,
 }
 
 impl Scene {
@@ -20,11 +21,15 @@ impl Scene {
 
     pub fn new(renderer: &Renderer, window_width: f32, window_height: f32) -> Self {
         let camera = Camera::new(window_width, window_height);
-
         let camera_controller = CameraController::new();
+        let mut world = bevy_ecs::world::World::new();
+        let mut schedule = Schedule::new();
+        schedule.add_system(init_transform);
+        schedule.run(&mut world);
         Self {
             camera,
             camera_controller,
+            world,
         }
     }
 
@@ -44,12 +49,21 @@ impl Scene {
         }
     }
 
-    pub fn tick(&mut self, queue: &wgpu::Queue, delta_time: Duration) {
+    pub fn update(&mut self, delta_time: Duration) {
+        let mut transform = self.world.query::<&mut Transform>();
+        for mut transform in transform.iter_mut(&mut self.world) {
+            transform.pos = self.camera.pos.map(|x| x as i32);
+            log::info!("Transform: {:?}", transform.pos);
+        }
         self.camera_controller.update(&mut self.camera, delta_time);
-
     }
 
     pub fn resize(&mut self, width: f32, height: f32) {
         self.camera.on_resize(width, height);
     }
+}
+
+fn init_transform(mut command: Commands) {
+    log::info!("Initializing transform");
+    command.spawn(Transform { pos: Vec3::zero() });
 }

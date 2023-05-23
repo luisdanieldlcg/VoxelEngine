@@ -1,6 +1,8 @@
 use super::{
     buffer::Buffer,
-    mesh::line::{create_lines, LineVertex},
+    mesh::{
+        line::{LineMesh, LineVertex},
+    },
     pipelines::debug::DebugPipeline,
     Renderable,
 };
@@ -13,17 +15,15 @@ impl Renderable for DebugRenderer {
     ) {
         render_pass.set_pipeline(&self.pipeline.pipeline);
         render_pass.set_bind_group(0, global_uniforms, &[]);
-        render_pass.set_vertex_buffer(0, self.buffer.buf.slice(..));
-        render_pass.set_index_buffer(self.indices.buf.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..self.num_indices as u32, 0, 0..1);
+        // self.line.render(render_pass, global_uniforms);
+        self.cube.render(render_pass, global_uniforms);
     }
 }
 
 pub struct DebugRenderer {
-    buffer: Buffer<LineVertex>,
-    indices: Buffer<u16>,
+    line: LineRenderer,
+    cube: LineRenderer,
     pipeline: DebugPipeline,
-    num_indices: usize,
 }
 
 impl DebugRenderer {
@@ -32,24 +32,46 @@ impl DebugRenderer {
         sfc: &wgpu::SurfaceConfiguration,
         transform_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> Self {
-        let data = create_lines();
+        let cube =LineMesh::cube(vek::Vec3::zero());
+        let line = LineMesh::line(vek::Vec3::zero());
         let pipeline = DebugPipeline::new(device, &sfc, &[transform_bind_group_layout]);
 
-        let buffer = Buffer::new(
+        Self {
+            line: LineRenderer::new(device, &line.vertices(), &line.compute_indices()),
+            cube: LineRenderer::new(device, &cube.vertices(), &cube.compute_indices()),
+            pipeline,
+        }
+    }
+}
+pub struct LineRenderer {
+    buffer: Buffer<LineVertex>,
+    indices: Buffer<u16>,
+    num_indices: u32,
+}
+
+impl Renderable for LineRenderer {
+    fn render<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, _: &'a wgpu::BindGroup) {
+        render_pass.set_index_buffer(self.indices.buf.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.set_vertex_buffer(0, self.buffer.buf.slice(..));
+        render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+    }
+}
+impl LineRenderer {
+    pub fn new(device: &wgpu::Device, vertices: &[LineVertex], indices: &[u16]) -> Self {
+        let line_vertex_buffer = Buffer::new(
             device,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            &data.0,
+            vertices,
         );
-        let indices = Buffer::new(
+        let line_index_buffer = Buffer::new(
             device,
             wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            &data.1,
+            indices,
         );
         Self {
-            buffer,
-            pipeline,
-            indices,
-            num_indices: data.1.len(),
+            buffer: line_vertex_buffer,
+            indices: line_index_buffer,
+            num_indices: indices.len() as u32,
         }
     }
 }

@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use bevy_ecs::{prelude::Component, system::Resource};
 use vek::{Mat4, Vec3};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 

@@ -17,16 +17,6 @@ impl Quad {
             dir,
         }
     }
-    pub fn generate_block_quads(id: &BlockId, offset: Vec3<i32>) -> [Self; 6] {
-        [
-            Quad::new(id, Direction::Up, offset),
-            Quad::new(id, Direction::Down, offset),
-            Quad::new(id, Direction::Left, offset),
-            Quad::new(id, Direction::Right, offset),
-            Quad::new(id, Direction::Front, offset),
-            Quad::new(id, Direction::Back, offset),
-        ]
-    }
 }
 
 impl Direction {
