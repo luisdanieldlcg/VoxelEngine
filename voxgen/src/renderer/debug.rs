@@ -1,8 +1,8 @@
+use vek::Vec3;
+
 use super::{
     buffer::Buffer,
-    mesh::{
-        line::{LineMesh, LineVertex},
-    },
+    mesh::line::{LineVertex, make_cube_mesh, make_line_mesh},
     pipelines::debug::DebugPipeline,
     Renderable,
 };
@@ -15,7 +15,7 @@ impl Renderable for DebugRenderer {
     ) {
         render_pass.set_pipeline(&self.pipeline.pipeline);
         render_pass.set_bind_group(0, global_uniforms, &[]);
-        // self.line.render(render_pass, global_uniforms);
+        self.line.render(render_pass, global_uniforms);
         self.cube.render(render_pass, global_uniforms);
     }
 }
@@ -32,13 +32,13 @@ impl DebugRenderer {
         sfc: &wgpu::SurfaceConfiguration,
         transform_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> Self {
-        let cube =LineMesh::cube(vek::Vec3::zero());
-        let line = LineMesh::line(vek::Vec3::zero());
+        let cube = make_cube_mesh(Vec3::zero());
+        let line = make_line_mesh(Vec3::new(0, 2, 2));
         let pipeline = DebugPipeline::new(device, &sfc, &[transform_bind_group_layout]);
 
         Self {
-            line: LineRenderer::new(device, &line.vertices(), &line.compute_indices()),
-            cube: LineRenderer::new(device, &cube.vertices(), &cube.compute_indices()),
+            line: LineRenderer::new(device, &line.0, &line.1),
+            cube: LineRenderer::new(device, &cube.0, &cube.1),
             pipeline,
         }
     }

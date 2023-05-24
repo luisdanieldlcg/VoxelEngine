@@ -2,9 +2,9 @@ pub mod camera;
 
 use std::time::Duration;
 
-use crate::{ecs::Transform, renderer::Renderer};
+use crate::{ecs::{Transform, BoundingBox}, renderer::Renderer};
 use bevy_ecs::{schedule::Schedule, system::Commands};
-use vek::Vec3;
+use vek::{Vec3, Vec2};
 
 use self::camera::{Camera, CameraController};
 
@@ -24,7 +24,7 @@ impl Scene {
         let camera_controller = CameraController::new();
         let mut world = bevy_ecs::world::World::new();
         let mut schedule = Schedule::new();
-        schedule.add_system(init_transform);
+        schedule.add_system(init_entities);
         schedule.run(&mut world);
         Self {
             camera,
@@ -63,7 +63,10 @@ impl Scene {
     }
 }
 
-fn init_transform(mut command: Commands) {
+fn init_entities(mut command: Commands) {
     log::info!("Initializing transform");
-    command.spawn(Transform { pos: Vec3::zero() });
+    command.spawn(Transform { pos: Vec3::zero() })
+    .insert(BoundingBox {
+        size: Vec2::new(20, 20),
+    });
 }

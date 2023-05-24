@@ -31,13 +31,13 @@ pub fn init(settings: WindowSettings) {
         match event {
             winit::event::Event::MainEventsCleared => {
                 let scale_factor = engine.window.scale_factor();
-                let dt = last_render_time.elapsed();
+                let dt = last_re nder_time.elapsed();
                 engine.renderer_mut().update(&scene);
                 scene.update(dt);
                 last_render_time = Instant::now();
                 match engine.renderer_mut().render(scale_factor, dt.as_secs_f32()) {
                     Ok(_) => (),
-                    Err(e) => log::error!("Rendering Errorl: {:?}", e),
+                    Err(e) => log::error!("Rendering Error: {:?}", e),
                 }
             }
             winit::event::Event::WindowEvent { event, .. } => match event {
